@@ -1,0 +1,1 @@
+2024-01-15 10:23:45.123 [main] INFO  com.example.OrderService - OrderRequest[orderId=12345, userId=U001, items=[Item[itemId=I001, name=Widget, price=9.99, qty=2], Item[itemId=I002, name=Gadget, price=19.99, qty=1]], address=Address[street=123 Main St, city=Springfield, state=IL, zip=62701], metadata={discount=10, coupon=SAVE10}]
