@@ -3,6 +3,8 @@ import { CopyButton } from "../../components/CopyButton.tsx";
 
 type Tab = "encode" | "decode";
 
+const ALLOWED_IMAGE_DATA_URI = /^data:image\/(png|jpe?g|gif|webp|svg\+xml|bmp|ico);base64,/i;
+
 export function Base64ImageTool() {
   const [tab, setTab] = useState<Tab>("encode");
 
@@ -38,9 +40,18 @@ export function Base64ImageTool() {
       setDecodePreview("");
       return;
     }
-    const src = value.trim().startsWith("data:")
-      ? value.trim()
-      : `data:image/png;base64,${value.trim()}`;
+    const trimmed = value.trim();
+    let src: string;
+    if (trimmed.startsWith("data:")) {
+      if (!ALLOWED_IMAGE_DATA_URI.test(trimmed)) {
+        setDecodeError("仅支持图片类型的 Data URI（png/jpeg/gif/webp/svg 等）");
+        setDecodePreview("");
+        return;
+      }
+      src = trimmed;
+    } else {
+      src = `data:image/png;base64,${trimmed}`;
+    }
     setDecodePreview(src);
   };
 
