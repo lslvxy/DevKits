@@ -3,12 +3,12 @@ import { CopyButton } from "../../components/CopyButton.tsx";
 
 type Tab = "encode" | "decode";
 
-const ALLOWED_MIME = /^data:(image\/(?:png|jpe?g|gif|webp|svg\+xml|bmp|ico));base64,/i;
+const ALLOWED_MIME = /^data:(image\/(?:png|jpe?g|gif|webp|bmp|ico));base64,/i;
 
 /** Decode a base64 data URI into a Blob URL to sanitize user-provided data. */
 function dataURIToBlobURL(dataURI: string): string {
   const m = ALLOWED_MIME.exec(dataURI);
-  if (!m) throw new Error("仅支持图片类型的 Data URI（png/jpeg/gif/webp/svg 等）");
+  if (!m) throw new Error("仅支持图片类型的 Data URI（png/jpeg/gif/webp/bmp/ico）");
   const mime = m[1];
   const b64 = dataURI.slice(dataURI.indexOf(",") + 1);
   const binary = atob(b64);
@@ -99,7 +99,7 @@ export function Base64ImageTool() {
             <input
               ref={encodeFileRef}
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/gif,image/webp,image/bmp"
               onChange={handleFileSelect}
               className="hidden"
             />

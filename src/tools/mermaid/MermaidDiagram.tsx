@@ -7,18 +7,17 @@ const DEFAULT_CODE = `graph TD
   B -->|Yes| C[OK]
   B -->|No| D[End]`;
 
-let initialized = false;
-
 export function MermaidDiagramTool() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [error, setError] = useState("");
   const previewRef = useRef<HTMLDivElement>(null);
   const renderIdRef = useRef(0);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (!initialized) {
+    if (!initializedRef.current) {
       mermaid.initialize({ startOnLoad: false, theme: "dark" });
-      initialized = true;
+      initializedRef.current = true;
     }
   }, []);
 

@@ -79,7 +79,6 @@ function convert(sql: string): string {
     const m = line.match(/^[`"']?(\w+)[`"']?\s+(\w+)/);
     if (!m) continue;
     const colName = m[1];
-    if (SKIP_PREFIXES.includes(colName.toUpperCase())) continue;
 
     const sqlType = m[2].toUpperCase().replace(/\s*\(.*\)/, "");
     const javaType = SQL_TO_JAVA[sqlType] ?? "String";
