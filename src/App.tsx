@@ -7,7 +7,7 @@ export default function App() {
   const activeToolId = useStore((s) => s.activeToolId);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#1e1e1e] text-[#d4d4d4]">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#1c1c1c] text-[#e0e0e0]">
       <Sidebar />
       <main className="flex-1 overflow-hidden">
         {activeToolId ? <ToolPage /> : <WelcomePage />}

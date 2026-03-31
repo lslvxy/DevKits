@@ -19,6 +19,8 @@ export function getToolById(id: string): ToolDefinition | undefined {
 
 import { tool as base64ImageTool } from "../tools/base64-image/index.ts";
 import { tool as base64Tool } from "../tools/base64/index.ts";
+import { tool as cronTool } from "../tools/cron-tool/index.ts";
+import { tool as cryptoToolsTool } from "../tools/crypto-tools/index.ts";
 import { tool as csvJsonTool } from "../tools/csv-json/index.ts";
 import { tool as hexAsciiTool } from "../tools/hex-ascii/index.ts";
 import { tool as jsonFormatterTool } from "../tools/json-formatter/index.ts";
@@ -29,10 +31,13 @@ import { tool as mermaidTool } from "../tools/mermaid/index.ts";
 import { tool as plantumlTool } from "../tools/plantuml/index.ts";
 import { tool as qrcodeTool } from "../tools/qrcode/index.ts";
 import { tool as randomStringTool } from "../tools/random-string/index.ts";
+import { tool as regexTesterTool } from "../tools/regex-tester/index.ts";
+import { tool as rsaKeygenTool } from "../tools/rsa-keygen/index.ts";
 import { tool as sqlFormatTool } from "../tools/sql-format/index.ts";
 import { tool as sqlPojoTool } from "../tools/sql-pojo/index.ts";
 import { tool as textDiffTool } from "../tools/text-diff/index.ts";
 import { tool as timestampTool } from "../tools/timestamp/index.ts";
+import { tool as urlCodecTool } from "../tools/url-codec/index.ts";
 import { tool as uuidTool } from "../tools/uuid/index.ts";
 import { tool as yamlJsonTool } from "../tools/yaml-json/index.ts";
 
@@ -53,3 +58,9 @@ registerTool(mermaidTool);
 registerTool(plantumlTool);
 registerTool(randomStringTool);
 registerTool(hexAsciiTool);
+// New tools
+registerTool(urlCodecTool);
+registerTool(cryptoToolsTool);
+registerTool(rsaKeygenTool);
+registerTool(regexTesterTool);
+registerTool(cronTool);
