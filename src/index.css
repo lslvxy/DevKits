@@ -12,8 +12,8 @@
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #1e1e1e;
-    color: #d4d4d4;
+    background: #1c1c1c;
+    color: #e0e0e0;
     overflow: hidden;
   }
 }
@@ -21,5 +21,6 @@
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
+    scrollbar-color: #3d3d3d transparent;
   }
 }

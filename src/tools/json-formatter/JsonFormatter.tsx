@@ -3,7 +3,25 @@ import { CodeEditor } from "../../components/CodeEditor.tsx";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
 
-type Mode = "format" | "compact" | "validate";
+type Mode = "format" | "compact" | "validate" | "escape" | "unescape";
+
+function escapeJsonString(str: string): string {
+  return (
+    str
+      .replace(/\\/g, "\\\\")
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, "\\n")
+      .replace(/\r/g, "\\r")
+      .replace(/\t/g, "\\t")
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: intentionally matching control chars for JSON escaping
+      .replace(/[\x00-\x1f\x7f]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`)
+  );
+}
+
+// Unescape a JSON-escaped string (the content inside the quotes)
+function unescapeJsonString(str: string): string {
+  return JSON.parse(`"${str}"`);
+}
 
 export function JsonFormatter() {
   const [input, setInput] = useState("");
@@ -19,6 +37,21 @@ export function JsonFormatter() {
       return;
     }
     try {
+      if (m === "escape") {
+        setOutput(escapeJsonString(text));
+        setError(null);
+        return;
+      }
+      if (m === "unescape") {
+        try {
+          setOutput(unescapeJsonString(text));
+          setError(null);
+        } catch {
+          setError("无效的 JSON 转义字符串");
+          setOutput("");
+        }
+        return;
+      }
       const parsed = JSON.parse(text);
       if (m === "format") {
         setOutput(JSON.stringify(parsed, null, ind));
@@ -52,23 +85,33 @@ export function JsonFormatter() {
     process(input, mode, n);
   };
 
+  const isEscapeMode = mode === "escape" || mode === "unescape";
+
+  const modeConfig: { id: Mode; label: string }[] = [
+    { id: "format", label: "格式化" },
+    { id: "compact", label: "压缩" },
+    { id: "validate", label: "校验" },
+    { id: "escape", label: "转义" },
+    { id: "unescape", label: "反转义" },
+  ];
+
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-4 py-2 bg-[#2d2d2d] border-b border-[#3e3e42]">
         <div className="flex gap-1">
-          {(["format", "compact", "validate"] as Mode[]).map((m) => (
+          {modeConfig.map(({ id, label }) => (
             <button
-              key={m}
+              key={id}
               type="button"
-              onClick={() => handleMode(m)}
+              onClick={() => handleMode(id)}
               className={`px-3 py-1 text-xs rounded transition-colors ${
-                mode === m
-                  ? "bg-[#007acc] text-white"
+                mode === id
+                  ? "bg-[#0078d4] text-white"
                   : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
               }`}
             >
-              {m === "format" ? "格式化" : m === "compact" ? "压缩" : "校验"}
+              {label}
             </button>
           ))}
         </div>
@@ -81,7 +124,7 @@ export function JsonFormatter() {
                 type="button"
                 onClick={() => handleIndent(n)}
                 className={`px-2 py-0.5 rounded ${
-                  indent === n ? "bg-[#007acc] text-white" : "bg-[#3c3c3c] text-[#d4d4d4]"
+                  indent === n ? "bg-[#0078d4] text-white" : "bg-[#3c3c3c] text-[#d4d4d4]"
                 }`}
               >
                 {n}
@@ -92,34 +135,66 @@ export function JsonFormatter() {
         {output && mode !== "validate" && <CopyButton text={output} />}
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <DualPanel
-          left={
-            <div className="flex flex-col h-full">
-              <div className="px-3 py-1 bg-[#252526] border-b border-[#3e3e42] text-xs text-[#858585]">
-                输入
+      {isEscapeMode ? (
+        // Simple textarea layout for escape/unescape
+        <div className="flex-1 overflow-hidden">
+          <DualPanel
+            left={
+              <div className="flex flex-col h-full">
+                <div className="px-3 py-1 bg-[#252526] border-b border-[#3e3e42] text-xs text-[#858585]">
+                  {mode === "escape" ? "原始字符串" : "JSON 转义字符串"}
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <CodeEditor value={input} onChange={handleInput} language="plaintext" />
+                </div>
               </div>
-              <div className="flex-1 overflow-hidden">
-                <CodeEditor value={input} onChange={handleInput} language="json" />
+            }
+            right={
+              <div className="flex flex-col h-full">
+                <div className="px-3 py-1 bg-[#252526] border-b border-[#3e3e42] text-xs text-[#858585]">
+                  {mode === "escape" ? "转义后字符串" : "反转义字符串"}
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  {error ? (
+                    <div className="p-4 text-red-400 text-sm font-mono">{error}</div>
+                  ) : (
+                    <CodeEditor value={output} language="plaintext" readOnly />
+                  )}
+                </div>
               </div>
-            </div>
-          }
-          right={
-            <div className="flex flex-col h-full">
-              <div className="px-3 py-1 bg-[#252526] border-b border-[#3e3e42] text-xs text-[#858585]">
-                输出
+            }
+          />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-hidden">
+          <DualPanel
+            left={
+              <div className="flex flex-col h-full">
+                <div className="px-3 py-1 bg-[#252526] border-b border-[#3e3e42] text-xs text-[#858585]">
+                  输入
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <CodeEditor value={input} onChange={handleInput} language="json" />
+                </div>
               </div>
-              <div className="flex-1 overflow-hidden">
-                {error ? (
-                  <div className="p-4 text-red-400 text-sm font-mono">{error}</div>
-                ) : (
-                  <CodeEditor value={output} language="json" readOnly />
-                )}
+            }
+            right={
+              <div className="flex flex-col h-full">
+                <div className="px-3 py-1 bg-[#252526] border-b border-[#3e3e42] text-xs text-[#858585]">
+                  输出
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  {error ? (
+                    <div className="p-4 text-red-400 text-sm font-mono">{error}</div>
+                  ) : (
+                    <CodeEditor value={output} language="json" readOnly />
+                  )}
+                </div>
               </div>
-            </div>
-          }
-        />
-      </div>
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -53,29 +53,32 @@ export function Sidebar() {
   }, []);
 
   return (
-    <aside className="flex h-screen w-[220px] min-w-[220px] flex-col bg-[#252526] border-r border-[#3e3e42]">
+    <aside className="flex h-screen w-[230px] min-w-[230px] flex-col bg-[#202020] border-r border-[#333333]">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#3e3e42]">
-        <h1 className="text-[15px] font-semibold text-white tracking-wide">DevKits</h1>
+      <div className="px-4 py-3.5 border-b border-[#333333]">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🛠️</span>
+          <h1 className="text-[15px] font-semibold text-white tracking-wide">DevKits</h1>
+        </div>
       </div>
 
       {/* Search */}
-      <div className="px-3 py-2 border-b border-[#3e3e42]">
-        <div className="flex items-center gap-2 bg-[#3c3c3c] rounded px-2 py-1">
-          <span className="text-[#858585] text-sm">🔍</span>
+      <div className="px-3 py-2 border-b border-[#333333]">
+        <div className="flex items-center gap-2 bg-[#2a2a2a] rounded-md px-2.5 py-1.5 border border-[#3a3a3a] focus-within:border-[#0078d4] transition-colors">
+          <span className="text-[#666] text-sm">🔍</span>
           <input
             ref={searchRef}
             type="text"
             placeholder="搜索工具... ⌘K"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-[#d4d4d4] placeholder-[#858585] outline-none"
+            className="flex-1 bg-transparent text-sm text-[#e0e0e0] placeholder-[#666] outline-none"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="text-[#858585] hover:text-[#d4d4d4] text-xs"
+              className="text-[#666] hover:text-[#e0e0e0] text-xs"
             >
               ✕
             </button>
@@ -89,7 +92,7 @@ export function Sidebar() {
           // Flat list when searching
           <div className="px-2">
             {filtered.length === 0 && (
-              <p className="px-2 py-4 text-xs text-[#858585] text-center">未找到工具</p>
+              <p className="px-2 py-4 text-xs text-[#666] text-center">未找到工具</p>
             )}
             {filtered.map((tool) => (
               <ToolItem
@@ -106,8 +109,8 @@ export function Sidebar() {
             const tools = grouped[cat];
             if (tools.length === 0) return null;
             return (
-              <div key={cat} className="mb-2">
-                <p className="px-3 py-1 text-xs font-medium text-[#858585]">
+              <div key={cat} className="mb-1">
+                <p className="px-3 pt-2 pb-1 text-[11px] font-semibold text-[#555] uppercase tracking-wider">
                   {CATEGORY_LABELS[cat]}
                 </p>
                 <div className="px-2">
@@ -142,13 +145,13 @@ function ToolItem({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left px-2 py-1.5 rounded text-sm flex items-center gap-2 transition-colors ${
+      className={`w-full text-left px-2.5 py-1.5 rounded-md text-sm flex items-center gap-2 transition-colors ${
         active
-          ? "bg-[#094771] text-white border-l-2 border-[#007acc]"
-          : "text-[#cccccc] hover:bg-[#2a2d2e]"
+          ? "bg-[#0e3a5c] text-white border-l-2 border-[#0078d4]"
+          : "text-[#c0c0c0] hover:bg-[#2a2a2a] hover:text-[#e0e0e0]"
       }`}
     >
-      <span>{tool.icon}</span>
+      <span className="text-base leading-none">{tool.icon}</span>
       <span className="truncate">{tool.name}</span>
     </button>
   );

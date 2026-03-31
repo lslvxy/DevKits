@@ -17,15 +17,18 @@
     "@monaco-editor/react": "^4.6.0",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-opener": "^2.0.0",
+    "cronstrue": "^3.14.0",
     "diff": "^8.0.4",
     "js-yaml": "^4.1.1",
     "jsqr": "^1.4.0",
     "mermaid": "^11.13.0",
+    "nanoid": "^5.1.7",
     "papaparse": "^5.5.3",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sql-formatter": "^15.7.3",
+    "uuid": "^13.0.0",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
