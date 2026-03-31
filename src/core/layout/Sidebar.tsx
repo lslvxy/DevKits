@@ -5,8 +5,16 @@ import { useStore } from "../store.ts";
 import { CATEGORY_ORDER, type ToolCategory, type ToolDefinition } from "../types.ts";
 
 export function Sidebar() {
-  const { activeToolId, searchQuery, locale, setActiveTool, setSearchQuery, setLocale } =
-    useStore();
+  const {
+    activeToolId,
+    searchQuery,
+    locale,
+    favoriteToolIds,
+    setActiveTool,
+    setSearchQuery,
+    setLocale,
+    toggleFavoriteTool,
+  } = useStore();
   const searchRef = useRef<HTMLInputElement>(null);
   const [, forceRender] = useState(0);
   const t = getT(locale);
@@ -17,19 +25,26 @@ export function Sidebar() {
   }, []);
 
   const allTools = getAllTools();
+  const favoriteSet = new Set(favoriteToolIds);
+  const favoriteTools = allTools.filter((tool) => favoriteSet.has(tool.id));
 
-  const filtered = searchQuery
-    ? allTools.filter((tool) => {
-        const q = searchQuery.toLowerCase();
-        return (
-          tool.name.zh.toLowerCase().includes(q) ||
-          tool.name.en.toLowerCase().includes(q) ||
-          tool.description.zh.toLowerCase().includes(q) ||
-          tool.description.en.toLowerCase().includes(q) ||
-          tool.keywords.some((k) => k.toLowerCase().includes(q))
-        );
-      })
-    : allTools;
+  const sortByFavoriteFirst = (tools: ToolDefinition[]) =>
+    [...tools].sort((a, b) => Number(favoriteSet.has(b.id)) - Number(favoriteSet.has(a.id)));
+
+  const filtered = sortByFavoriteFirst(
+    searchQuery
+      ? allTools.filter((tool) => {
+          const q = searchQuery.toLowerCase();
+          return (
+            tool.name.zh.toLowerCase().includes(q) ||
+            tool.name.en.toLowerCase().includes(q) ||
+            tool.description.zh.toLowerCase().includes(q) ||
+            tool.description.en.toLowerCase().includes(q) ||
+            tool.keywords.some((k) => k.toLowerCase().includes(q))
+          );
+        })
+      : allTools
+  );
 
   // Group by category
   const grouped = CATEGORY_ORDER.reduce<Record<ToolCategory, ToolDefinition[]>>(
@@ -100,34 +115,63 @@ export function Sidebar() {
                 tool={tool}
                 locale={locale}
                 active={tool.id === activeToolId}
+                isFavorite={favoriteSet.has(tool.id)}
+                favoriteTitle={favoriteSet.has(tool.id) ? t.ui.removeFavorite : t.ui.addFavorite}
+                onToggleFavorite={() => toggleFavoriteTool(tool.id)}
                 onClick={() => setActiveTool(tool.id)}
               />
             ))}
           </div>
         ) : (
-          // Grouped
-          CATEGORY_ORDER.map((cat) => {
-            const tools = grouped[cat];
-            if (tools.length === 0) return null;
-            return (
-              <div key={cat} className="mb-1">
+          <>
+            {favoriteTools.length > 0 && (
+              <div className="mb-1">
                 <p className="px-3 pt-2 pb-1 text-[11px] font-semibold text-[#555] uppercase tracking-wider">
-                  {t.categories[cat]}
+                  {t.ui.favorites}
                 </p>
                 <div className="px-2">
-                  {tools.map((tool) => (
+                  {favoriteTools.map((tool) => (
                     <ToolItem
                       key={tool.id}
                       tool={tool}
                       locale={locale}
                       active={tool.id === activeToolId}
+                      isFavorite={true}
+                      favoriteTitle={t.ui.removeFavorite}
+                      onToggleFavorite={() => toggleFavoriteTool(tool.id)}
                       onClick={() => setActiveTool(tool.id)}
                     />
                   ))}
                 </div>
               </div>
-            );
-          })
+            )}
+
+            {CATEGORY_ORDER.map((cat) => {
+              const tools = grouped[cat].filter((tool) => !favoriteSet.has(tool.id));
+              if (tools.length === 0) return null;
+              return (
+                <div key={cat} className="mb-1">
+                  <p className="px-3 pt-2 pb-1 text-[11px] font-semibold text-[#555] uppercase tracking-wider">
+                    {t.categories[cat]}
+                  </p>
+                  <div className="px-2">
+                    {tools.map((tool) => (
+                      <ToolItem
+                        key={tool.id}
+                        tool={tool}
+                        locale={locale}
+                        active={tool.id === activeToolId}
+                        isFavorite={false}
+                        favoriteTitle={t.ui.addFavorite}
+                        onToggleFavorite={() => toggleFavoriteTool(tool.id)}
+                        onClick={() => setActiveTool(tool.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </>
         )}
       </nav>
 
@@ -150,11 +194,17 @@ function ToolItem({
   tool,
   locale,
   active,
+  isFavorite,
+  favoriteTitle,
+  onToggleFavorite,
   onClick,
 }: {
   tool: ToolDefinition;
   locale: Locale;
   active: boolean;
+  isFavorite: boolean;
+  favoriteTitle: string;
+  onToggleFavorite: () => void;
   onClick: () => void;
 }) {
   return (
@@ -169,6 +219,28 @@ function ToolItem({
     >
       <span className="text-base leading-none">{tool.icon}</span>
       <span className="truncate">{tool.name[locale]}</span>
+      <span
+        role="button"
+        tabIndex={0}
+        title={favoriteTitle}
+        aria-label={favoriteTitle}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleFavorite();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleFavorite();
+          }
+        }}
+        className={`ml-auto text-xs transition-colors ${
+          isFavorite ? "text-[#f5c451]" : "text-[#666] hover:text-[#f5c451]"
+        }`}
+      >
+        {isFavorite ? "★" : "☆"}
+      </span>
     </button>
   );
 }

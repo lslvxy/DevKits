@@ -11,6 +11,9 @@ export type Translations = {
     welcomeHint: string;
     copy: string;
     copied: string;
+    favorites: string;
+    addFavorite: string;
+    removeFavorite: string;
   };
   categories: {
     text: string;
@@ -49,8 +52,22 @@ export type Translations = {
       currentTime: string;
       tsToDate: string;
       dateToTs: string;
+      formatWorkbench: string;
+      sourceType: string;
+      sourceCurrent: string;
+      sourceSpecified: string;
+      specifiedTime: string;
       tsPlaceholder: string;
       datePlaceholder: string;
+      formatPattern: string;
+      formatPatternPlaceholder: string;
+      unixMs: string;
+      unixSec: string;
+      isoOutput: string;
+      localOutput: string;
+      utcOutput: string;
+      formattedOutput: string;
+      invalidSourceTime: string;
       invalidTimestamp: string;
       invalidDateFormat: string;
     };
@@ -328,6 +345,9 @@ export const translations: Record<Locale, Translations> = {
       welcomeHint: "从左侧选择一个工具开始使用",
       copy: "📋 复制",
       copied: "✓ 已复制",
+      favorites: "⭐ 收藏",
+      addFavorite: "添加收藏",
+      removeFavorite: "取消收藏",
     },
     categories: {
       text: "📋 文本",
@@ -366,8 +386,22 @@ export const translations: Record<Locale, Translations> = {
         currentTime: "当前时间",
         tsToDate: "时间戳 → 日期",
         dateToTs: "日期 → 时间戳",
+        formatWorkbench: "时间格式化工作台",
+        sourceType: "时间来源",
+        sourceCurrent: "当前时间",
+        sourceSpecified: "指定时间",
+        specifiedTime: "指定时间",
         tsPlaceholder: "输入时间戳 (秒或毫秒)...",
         datePlaceholder: "输入日期 (如 2024-01-01 12:00:00)...",
+        formatPattern: "时间格式",
+        formatPatternPlaceholder: "输入格式模板 (如 YYYY-MM-DD HH:mm:ss)",
+        unixMs: "Unix 毫秒",
+        unixSec: "Unix 秒",
+        isoOutput: "ISO 时间",
+        localOutput: "本地时间",
+        utcOutput: "UTC 时间",
+        formattedOutput: "格式化时间",
+        invalidSourceTime: "指定时间无效",
         invalidTimestamp: "无效的时间戳",
         invalidDateFormat: "无效的日期格式",
       },
@@ -641,6 +675,9 @@ export const translations: Record<Locale, Translations> = {
       welcomeHint: "Select a tool from the sidebar to get started",
       copy: "📋 Copy",
       copied: "✓ Copied",
+      favorites: "⭐ Favorites",
+      addFavorite: "Add to favorites",
+      removeFavorite: "Remove from favorites",
     },
     categories: {
       text: "📋 Text",
@@ -681,8 +718,22 @@ export const translations: Record<Locale, Translations> = {
         currentTime: "Current Time",
         tsToDate: "Timestamp → Date",
         dateToTs: "Date → Timestamp",
+        formatWorkbench: "Time Formatting Workbench",
+        sourceType: "Time Source",
+        sourceCurrent: "Current Time",
+        sourceSpecified: "Specified Time",
+        specifiedTime: "Specified Time",
         tsPlaceholder: "Enter timestamp (seconds or ms)...",
         datePlaceholder: "Enter date (e.g. 2024-01-01 12:00:00)...",
+        formatPattern: "Time Format",
+        formatPatternPlaceholder: "Enter format pattern (e.g. YYYY-MM-DD HH:mm:ss)",
+        unixMs: "Unix Milliseconds",
+        unixSec: "Unix Seconds",
+        isoOutput: "ISO Time",
+        localOutput: "Local Time",
+        utcOutput: "UTC Time",
+        formattedOutput: "Formatted Time",
+        invalidSourceTime: "Invalid specified time",
         invalidTimestamp: "Invalid timestamp",
         invalidDateFormat: "Invalid date format",
       },
