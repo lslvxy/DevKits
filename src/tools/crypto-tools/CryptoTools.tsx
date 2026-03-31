@@ -463,6 +463,7 @@ type Tab = "hash" | "hmac" | "aes";
 export function CryptoTools() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
+  const [tab, setTab] = useState<Tab>("hash");
 
   return (
     <div className="flex flex-col h-full overflow-auto p-6 gap-4">
