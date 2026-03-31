@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getT } from "../../i18n/index.ts";
+import { type Locale, getT } from "../../i18n/index.ts";
 import { getAllTools } from "../registry.ts";
 import { useStore } from "../store.ts";
 import { CATEGORY_ORDER, type ToolCategory, type ToolDefinition } from "../types.ts";
@@ -153,7 +153,7 @@ function ToolItem({
   onClick,
 }: {
   tool: ToolDefinition;
-  locale: import("../../i18n/index.ts").Locale;
+  locale: Locale;
   active: boolean;
   onClick: () => void;
 }) {
