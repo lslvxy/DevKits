@@ -1,9 +1,23 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
 
 type Tab = "encode" | "decode";
 
-const ALLOWED_IMAGE_DATA_URI = /^data:image\/(png|jpe?g|gif|webp|svg\+xml|bmp|ico);base64,/i;
+const ALLOWED_MIME = /^data:(image\/(?:png|jpe?g|gif|webp|svg\+xml|bmp|ico));base64,/i;
+
+/** Decode a base64 data URI into a Blob URL to sanitize user-provided data. */
+function dataURIToBlobURL(dataURI: string): string {
+  const m = ALLOWED_MIME.exec(dataURI);
+  if (!m) throw new Error("仅支持图片类型的 Data URI（png/jpeg/gif/webp/svg 等）");
+  const mime = m[1];
+  const b64 = dataURI.slice(dataURI.indexOf(",") + 1);
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return URL.createObjectURL(new Blob([bytes], { type: mime }));
+}
 
 export function Base64ImageTool() {
   const [tab, setTab] = useState<Tab>("encode");
@@ -18,6 +32,14 @@ export function Base64ImageTool() {
   const [decodeInput, setDecodeInput] = useState("");
   const [decodePreview, setDecodePreview] = useState("");
   const [decodeError, setDecodeError] = useState("");
+  const decodeBlobRef = useRef<string>("");
+
+  // Revoke blob URL on unmount to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      if (decodeBlobRef.current) URL.revokeObjectURL(decodeBlobRef.current);
+    };
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,23 +58,22 @@ export function Base64ImageTool() {
   const handleDecodeChange = (value: string) => {
     setDecodeInput(value);
     setDecodeError("");
-    if (!value.trim()) {
-      setDecodePreview("");
-      return;
+    // Revoke the previous blob URL
+    if (decodeBlobRef.current) {
+      URL.revokeObjectURL(decodeBlobRef.current);
+      decodeBlobRef.current = "";
     }
+    setDecodePreview("");
+    if (!value.trim()) return;
     const trimmed = value.trim();
-    let src: string;
-    if (trimmed.startsWith("data:")) {
-      if (!ALLOWED_IMAGE_DATA_URI.test(trimmed)) {
-        setDecodeError("仅支持图片类型的 Data URI（png/jpeg/gif/webp/svg 等）");
-        setDecodePreview("");
-        return;
-      }
-      src = trimmed;
-    } else {
-      src = `data:image/png;base64,${trimmed}`;
+    const dataURI = trimmed.startsWith("data:") ? trimmed : `data:image/png;base64,${trimmed}`;
+    try {
+      const blobURL = dataURIToBlobURL(dataURI);
+      decodeBlobRef.current = blobURL;
+      setDecodePreview(blobURL);
+    } catch (e) {
+      setDecodeError(e instanceof Error ? e.message : "无效的 Base64 字符串");
     }
-    setDecodePreview(src);
   };
 
   const tabCls = (active: boolean) =>
