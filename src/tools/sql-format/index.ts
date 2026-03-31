@@ -3,8 +3,8 @@ import type { ToolDefinition } from "../../core/types.ts";
 
 export const tool: ToolDefinition = {
   id: "sql-format",
-  name: "SQL 格式化",
-  description: "格式化 SQL 语句",
+  name: { zh: "SQL 格式化", en: "SQL Formatter" },
+  description: { zh: "格式化 SQL 语句", en: "Format SQL statements" },
   category: "text",
   icon: "🗄️",
   keywords: ["sql", "format", "格式化", "database"],

@@ -3,8 +3,8 @@ import type { ToolDefinition } from "../../core/types.ts";
 
 export const tool: ToolDefinition = {
   id: "yaml-json",
-  name: "YAML/JSON 转换",
-  description: "YAML 与 JSON 格式互转",
+  name: { zh: "YAML/JSON 转换", en: "YAML/JSON Converter" },
+  description: { zh: "YAML 与 JSON 格式互转", en: "Convert between YAML and JSON" },
   category: "convert",
   icon: "🔀",
   keywords: ["yaml", "json", "convert", "转换"],

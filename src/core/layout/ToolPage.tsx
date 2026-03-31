@@ -1,10 +1,13 @@
 import { Suspense } from "react";
+import { getT } from "../../i18n/index.ts";
 import { getToolById } from "../registry.ts";
 import { useStore } from "../store.ts";
 
 export function ToolPage() {
   const activeToolId = useStore((s) => s.activeToolId);
+  const locale = useStore((s) => s.locale);
   const tool = activeToolId ? getToolById(activeToolId) : null;
+  const t = getT(locale);
 
   if (!tool) return null;
 
@@ -16,15 +19,17 @@ export function ToolPage() {
         <div className="flex items-center gap-3">
           <span className="text-2xl">{tool.icon}</span>
           <div>
-            <h2 className="text-base font-semibold text-white">{tool.name}</h2>
-            <p className="text-xs text-[#888]">{tool.description}</p>
+            <h2 className="text-base font-semibold text-white">{tool.name[locale]}</h2>
+            <p className="text-xs text-[#888]">{tool.description[locale]}</p>
           </div>
         </div>
       </div>
       <div className="flex-1 overflow-hidden">
         <Suspense
           fallback={
-            <div className="flex items-center justify-center h-full text-[#666]">加载中...</div>
+            <div className="flex items-center justify-center h-full text-[#666]">
+              {t.ui.loadingTool}
+            </div>
           }
         >
           <Component />

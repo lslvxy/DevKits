@@ -3,8 +3,8 @@ import type { ToolDefinition } from "../../core/types.ts";
 
 export const tool: ToolDefinition = {
   id: "hex-ascii",
-  name: "Hex/ASCII 转换",
-  description: "Hex 与 ASCII 文本互转",
+  name: { zh: "Hex/ASCII 转换", en: "Hex/ASCII Converter" },
+  description: { zh: "Hex 与 ASCII 文本互转", en: "Convert between Hex and ASCII" },
   category: "codec",
   icon: "🔢",
   keywords: ["hex", "ascii", "convert", "转换", "hexadecimal"],

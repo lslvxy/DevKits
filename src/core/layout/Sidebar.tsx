@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState } from "react";
+import { getT } from "../../i18n/index.ts";
 import { getAllTools } from "../registry.ts";
 import { useStore } from "../store.ts";
-import {
-  CATEGORY_LABELS,
-  CATEGORY_ORDER,
-  type ToolCategory,
-  type ToolDefinition,
-} from "../types.ts";
+import { CATEGORY_ORDER, type ToolCategory, type ToolDefinition } from "../types.ts";
 
 export function Sidebar() {
-  const { activeToolId, searchQuery, setActiveTool, setSearchQuery } = useStore();
+  const { activeToolId, searchQuery, locale, setActiveTool, setSearchQuery, setLocale } =
+    useStore();
   const searchRef = useRef<HTMLInputElement>(null);
   const [, forceRender] = useState(0);
+  const t = getT(locale);
 
   // Force render to pick up registered tools
   useEffect(() => {
@@ -21,12 +19,14 @@ export function Sidebar() {
   const allTools = getAllTools();
 
   const filtered = searchQuery
-    ? allTools.filter((t) => {
+    ? allTools.filter((tool) => {
         const q = searchQuery.toLowerCase();
         return (
-          t.name.toLowerCase().includes(q) ||
-          t.description.toLowerCase().includes(q) ||
-          t.keywords.some((k) => k.toLowerCase().includes(q))
+          tool.name.zh.toLowerCase().includes(q) ||
+          tool.name.en.toLowerCase().includes(q) ||
+          tool.description.zh.toLowerCase().includes(q) ||
+          tool.description.en.toLowerCase().includes(q) ||
+          tool.keywords.some((k) => k.toLowerCase().includes(q))
         );
       })
     : allTools;
@@ -34,7 +34,7 @@ export function Sidebar() {
   // Group by category
   const grouped = CATEGORY_ORDER.reduce<Record<ToolCategory, ToolDefinition[]>>(
     (acc, cat) => {
-      acc[cat] = filtered.filter((t) => t.category === cat);
+      acc[cat] = filtered.filter((tool) => tool.category === cat);
       return acc;
     },
     {} as Record<ToolCategory, ToolDefinition[]>
@@ -69,7 +69,7 @@ export function Sidebar() {
           <input
             ref={searchRef}
             type="text"
-            placeholder="搜索工具... ⌘K"
+            placeholder={t.ui.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent text-sm text-[#e0e0e0] placeholder-[#666] outline-none"
@@ -92,12 +92,13 @@ export function Sidebar() {
           // Flat list when searching
           <div className="px-2">
             {filtered.length === 0 && (
-              <p className="px-2 py-4 text-xs text-[#666] text-center">未找到工具</p>
+              <p className="px-2 py-4 text-xs text-[#666] text-center">{t.ui.noToolsFound}</p>
             )}
             {filtered.map((tool) => (
               <ToolItem
                 key={tool.id}
                 tool={tool}
+                locale={locale}
                 active={tool.id === activeToolId}
                 onClick={() => setActiveTool(tool.id)}
               />
@@ -111,13 +112,14 @@ export function Sidebar() {
             return (
               <div key={cat} className="mb-1">
                 <p className="px-3 pt-2 pb-1 text-[11px] font-semibold text-[#555] uppercase tracking-wider">
-                  {CATEGORY_LABELS[cat]}
+                  {t.categories[cat]}
                 </p>
                 <div className="px-2">
                   {tools.map((tool) => (
                     <ToolItem
                       key={tool.id}
                       tool={tool}
+                      locale={locale}
                       active={tool.id === activeToolId}
                       onClick={() => setActiveTool(tool.id)}
                     />
@@ -128,16 +130,30 @@ export function Sidebar() {
           })
         )}
       </nav>
+
+      {/* Language toggle */}
+      <div className="px-3 py-2 border-t border-[#333333]">
+        <button
+          type="button"
+          onClick={() => setLocale(locale === "zh" ? "en" : "zh")}
+          className="flex items-center gap-1.5 text-xs text-[#888] hover:text-[#e0e0e0] transition-colors"
+        >
+          <span>🌐</span>
+          <span>{locale === "zh" ? "EN" : "中"}</span>
+        </button>
+      </div>
     </aside>
   );
 }
 
 function ToolItem({
   tool,
+  locale,
   active,
   onClick,
 }: {
   tool: ToolDefinition;
+  locale: import("../../i18n/index.ts").Locale;
   active: boolean;
   onClick: () => void;
 }) {
@@ -152,7 +168,7 @@ function ToolItem({
       }`}
     >
       <span className="text-base leading-none">{tool.icon}</span>
-      <span className="truncate">{tool.name}</span>
+      <span className="truncate">{tool.name[locale]}</span>
     </button>
   );
 }

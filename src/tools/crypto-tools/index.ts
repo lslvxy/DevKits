@@ -3,8 +3,8 @@ import type { ToolDefinition } from "../../core/types.ts";
 
 export const tool: ToolDefinition = {
   id: "crypto-tools",
-  name: "加解密工具",
-  description: "哈希、AES 加解密等常用加密算法",
+  name: { zh: "加解密工具", en: "Crypto Tools" },
+  description: { zh: "哈希、AES 加解密等常用加密算法", en: "Hash, AES encryption and more" },
   category: "crypto",
   icon: "🔐",
   keywords: [
