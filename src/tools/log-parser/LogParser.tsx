@@ -3,6 +3,8 @@ import { CodeEditor } from "../../components/CodeEditor.tsx";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
 import { JsonViewer } from "../../components/JsonViewer.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 import { createChain } from "./parsers/chain.ts";
 import { FallbackParser } from "./parsers/fallback.ts";
 import { JsonDetectParser } from "./parsers/json-detect.ts";
@@ -36,6 +38,8 @@ const MODE_LABELS: Record<Mode, string> = {
 };
 
 export function LogParser() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [input, setInput] = useState("");
   const [result, setResult] = useState<ParseResult | null>(null);
   const [mode, setMode] = useState<Mode>("auto");
@@ -73,7 +77,7 @@ export function LogParser() {
           left={
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between px-3 py-1.5 bg-[#2d2d2d] border-b border-[#3e3e42]">
-                <span className="text-xs text-[#858585]">输入</span>
+                <span className="text-xs text-[#858585]">{t.tools.logParser.inputPlaceholder}</span>
                 <button
                   type="button"
                   className="text-xs text-[#858585] hover:text-[#d4d4d4]"
@@ -82,7 +86,7 @@ export function LogParser() {
                     setResult(null);
                   }}
                 >
-                  清空
+                  {t.tools.logParser.clear}
                 </button>
               </div>
               <div className="flex-1 overflow-hidden">
@@ -93,7 +97,7 @@ export function LogParser() {
           right={
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between px-3 py-1.5 bg-[#2d2d2d] border-b border-[#3e3e42]">
-                <span className="text-xs text-[#858585]">输出 (JSON)</span>
+                <span className="text-xs text-[#858585]">{t.tools.logParser.inputPlaceholder}</span>
                 {outputJson && <CopyButton text={outputJson} />}
               </div>
               <div className="flex-1 overflow-hidden bg-[#1e1e1e]">
@@ -132,8 +136,8 @@ export function LogParser() {
         </div>
         {result && (
           <div className="flex items-center gap-3">
-            <span>解析器: {result.parserName}</span>
-            <span>置信度: {(result.confidence * 100).toFixed(0)}%</span>
+            <span>{t.tools.logParser.parsed}: {result.parserName}</span>
+            <span>Confidence: {(result.confidence * 100).toFixed(0)}%</span>
           </div>
         )}
       </div>

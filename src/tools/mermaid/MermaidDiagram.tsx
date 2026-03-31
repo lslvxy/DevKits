@@ -1,6 +1,8 @@
 import mermaid from "mermaid";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DualPanel } from "../../components/DualPanel.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 const DEFAULT_CODE = `graph TD
   A[Start] --> B{Is it?}
@@ -8,6 +10,8 @@ const DEFAULT_CODE = `graph TD
   B -->|No| D[End]`;
 
 export function MermaidDiagramTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [code, setCode] = useState(DEFAULT_CODE);
   const [error, setError] = useState("");
   const previewRef = useRef<HTMLDivElement>(null);
@@ -32,7 +36,7 @@ export function MermaidDiagramTool() {
         setError("");
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "渲染失败");
+      setError(e instanceof Error ? e.message : t.tools.mermaid.renderError);
       if (previewRef.current) {
         previewRef.current.innerHTML = "";
       }
@@ -50,7 +54,7 @@ export function MermaidDiagramTool() {
         <DualPanel
           left={
             <div className="flex h-full flex-col gap-2 p-3">
-              <h3 className="text-sm font-medium text-[#d4d4d4]">Mermaid 代码</h3>
+              <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.mermaid.editor}</h3>
               <textarea
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
@@ -61,7 +65,7 @@ export function MermaidDiagramTool() {
           }
           right={
             <div className="flex h-full flex-col gap-2 p-3">
-              <h3 className="text-sm font-medium text-[#d4d4d4]">预览</h3>
+              <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.mermaid.preview}</h3>
               <div className="flex-1 overflow-auto rounded border border-[#3e3e42] bg-[#1e1e1e] p-4">
                 <div ref={previewRef} className="flex min-h-full items-center justify-center" />
               </div>

@@ -1,9 +1,13 @@
 import { useState } from "react";
+import { getT } from "../../i18n/index.ts";
 import { CopyButton } from "../../components/CopyButton.tsx";
+import { useStore } from "../../core/store.ts";
 
 type Mode = "encode" | "decode";
 
 export function Base64Tool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +28,7 @@ export function Base64Tool() {
         setError(null);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "处理失败");
+      setError(e instanceof Error ? e.message : t.tools.base64.processFailed);
       setOutput("");
     }
   };
@@ -54,7 +58,7 @@ export function Base64Tool() {
                 : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
             }`}
           >
-            {m === "encode" ? "编码" : "解码"}
+            {m === "encode" ? t.tools.base64.encode : t.tools.base64.decode}
           </button>
         ))}
       </div>
@@ -62,14 +66,14 @@ export function Base64Tool() {
       {/* Input */}
       <div className="flex flex-col gap-1 flex-1">
         <label htmlFor="base64-input" className="text-xs text-[#858585]">
-          输入
+          {t.tools.base64.input}
         </label>
         <textarea
           id="base64-input"
           value={input}
           onChange={(e) => handleInput(e.target.value)}
           className="flex-1 bg-[#1e1e1e] border border-[#3e3e42] rounded p-3 text-sm font-mono text-[#d4d4d4] outline-none resize-none focus:border-[#007acc]"
-          placeholder={mode === "encode" ? "输入要编码的文本..." : "输入 Base64 字符串..."}
+          placeholder={mode === "encode" ? t.tools.base64.inputEncodePlaceholder : t.tools.base64.inputDecodePlaceholder}
         />
       </div>
 
@@ -77,7 +81,7 @@ export function Base64Tool() {
       <div className="flex flex-col gap-1 flex-1">
         <div className="flex items-center justify-between">
           <label htmlFor="base64-output" className="text-xs text-[#858585]">
-            输出
+            {t.tools.base64.output}
           </label>
           {output && <CopyButton text={output} />}
         </div>
@@ -91,7 +95,7 @@ export function Base64Tool() {
             readOnly
             value={output}
             className="flex-1 bg-[#252526] border border-[#3e3e42] rounded p-3 text-sm font-mono text-[#d4d4d4] outline-none resize-none"
-            placeholder="结果将显示在这里..."
+            placeholder={t.tools.base64.outputPlaceholder}
           />
         )}
       </div>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 const SKIP_PREFIXES = ["PRIMARY", "KEY", "INDEX", "UNIQUE", "FOREIGN", "CONSTRAINT"];
 
@@ -58,12 +60,12 @@ function extractBody(sql: string): string {
       }
     }
   }
-  throw new Error("无法解析表结构");
+  throw new Error(t.tools.sqlPojo.parseError);
 }
 
 function convert(sql: string): string {
   const tableMatch = sql.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"']?(\w+)[`"']?\s*\(/i);
-  if (!tableMatch) throw new Error("未找到有效的 CREATE TABLE 语句");
+  if (!tableMatch) throw new Error(t.tools.sqlPojo.noCreateTable);
 
   const className = toPascal(tableMatch[1]);
   const body = extractBody(sql);
@@ -112,6 +114,8 @@ function convert(sql: string): string {
 }
 
 export function SqlPojoTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
@@ -137,7 +141,7 @@ export function SqlPojoTool() {
         <DualPanel
           left={
             <div className="flex h-full flex-col gap-2 p-3">
-              <h3 className="text-sm font-medium text-[#d4d4d4]">CREATE TABLE SQL</h3>
+              <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.sqlPojo.input}</h3>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

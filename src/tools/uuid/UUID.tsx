@@ -1,6 +1,8 @@
 import { customAlphabet, nanoid } from "nanoid";
 import { useState } from "react";
 import { v4 as uuidv4, v7 as uuidv7 } from "uuid";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 import { CopyButton } from "../../components/CopyButton.tsx";
 
 type Version = "v4" | "v7" | "nanoid";
@@ -31,6 +33,8 @@ function generateId(
 }
 
 export function UUIDTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [count, setCount] = useState(1);
   const [ids, setIds] = useState<string[]>([]);
   const [version, setVersion] = useState<Version>("v4");
@@ -50,11 +54,11 @@ export function UUIDTool() {
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto">
       {/* Controls */}
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-        <h3 className="text-sm font-medium text-[#d4d4d4] mb-4">生成选项</h3>
+        <h3 className="text-sm font-medium text-[#d4d4d4] mb-4">{t.tools.uuid.genOptions}</h3>
 
         {/* Version selector */}
         <div className="mb-4">
-          <p className="text-xs text-[#858585] mb-2">类型</p>
+          <p className="text-xs text-[#858585] mb-2">{t.tools.uuid.type}</p>
           <div className="flex gap-2">
             {(["v4", "v7", "nanoid"] as Version[]).map((v) => (
               <button
@@ -72,9 +76,9 @@ export function UUIDTool() {
             ))}
           </div>
           <p className="mt-1.5 text-xs text-[#858585]">
-            {version === "v4" && "随机生成，符合 RFC 4122 标准"}
-            {version === "v7" && "基于时间戳（毫秒），字典序可排序，符合 RFC 9562 标准"}
-            {version === "nanoid" && "更短、URL 安全的唯一 ID，默认 21 字符"}
+            {version === "v4" && t.tools.uuid.v4Desc}
+            {version === "v7" && t.tools.uuid.v7Desc}
+            {version === "nanoid" && t.tools.uuid.nanoidDesc}
           </p>
         </div>
 
@@ -82,7 +86,7 @@ export function UUIDTool() {
           {/* Count */}
           <div className="flex items-center gap-2">
             <label htmlFor="uuid-count" className="text-xs text-[#858585]">
-              数量:
+              {t.tools.uuid.count}
             </label>
             <input
               id="uuid-count"
@@ -105,7 +109,7 @@ export function UUIDTool() {
                   onChange={(e) => setUppercase(e.target.checked)}
                   className="accent-[#0078d4]"
                 />
-                大写
+                {t.tools.uuid.uppercase}
               </label>
               <label className="flex items-center gap-2 text-xs text-[#858585] cursor-pointer">
                 <input
@@ -114,7 +118,7 @@ export function UUIDTool() {
                   onChange={(e) => setNoDash(e.target.checked)}
                   className="accent-[#0078d4]"
                 />
-                无连字符
+                {t.tools.uuid.noDash}
               </label>
             </>
           )}
@@ -124,7 +128,7 @@ export function UUIDTool() {
             <>
               <div className="flex items-center gap-2">
                 <label htmlFor="nanoid-len" className="text-xs text-[#858585]">
-                  长度:
+                  {t.tools.uuid.length}
                 </label>
                 <input
                   id="nanoid-len"
@@ -138,7 +142,7 @@ export function UUIDTool() {
               </div>
               <div className="flex items-center gap-2 flex-1 min-w-[200px]">
                 <label htmlFor="nanoid-alphabet" className="text-xs text-[#858585] shrink-0">
-                  字符集:
+                  {t.tools.uuid.alphabet}
                 </label>
                 <input
                   id="nanoid-alphabet"
@@ -156,7 +160,7 @@ export function UUIDTool() {
             onClick={generate}
             className="px-4 py-1.5 bg-[#0078d4] text-white text-sm rounded hover:bg-[#106ebe] transition-colors"
           >
-            生成
+            {t.tools.uuid.generate}
           </button>
         </div>
       </div>
@@ -165,7 +169,7 @@ export function UUIDTool() {
       {ids.length > 0 && (
         <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-[#d4d4d4]">结果</h3>
+            <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.uuid.results}</h3>
             <CopyButton text={ids.join("\n")} />
           </div>
           <div className="flex flex-col gap-1.5">

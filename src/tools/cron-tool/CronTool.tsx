@@ -1,5 +1,7 @@
 import cronstrue from "cronstrue";
 import { useMemo, useState } from "react";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 import "cronstrue/locales/zh_CN";
 
 // ─── Next execution times ────────────────────────────────────────────────────
@@ -137,11 +139,13 @@ function FieldEditor({
   names?: string[];
   onChange: (f: CronField) => void;
 }) {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const modes: { id: FieldMode; label: string }[] = [
-    { id: "every", label: `每${label}` },
-    { id: "specific", label: "指定" },
-    { id: "range", label: "范围" },
-    { id: "step", label: "间隔" },
+    { id: "every", label: `${t.tools.cron.everyPrefix} ${label}` },
+    { id: "specific", label: t.tools.cron.modeSpecific },
+    { id: "range", label: t.tools.cron.modeRange },
+    { id: "step", label: t.tools.cron.modeStep },
   ];
 
   const toggleSpecific = (v: number) => {
@@ -205,7 +209,7 @@ function FieldEditor({
             onChange={(e) => onChange({ ...field, rangeFrom: Number(e.target.value) })}
             className="w-14 bg-[#3c3c3c] border border-[#3e3e42] rounded px-2 py-1 text-sm text-[#d4d4d4] outline-none focus:border-[#0078d4]"
           />
-          <span>到</span>
+          <span>{t.tools.cron.rangeTo}</span>
           <input
             type="number"
             min={field.rangeFrom}
@@ -219,7 +223,7 @@ function FieldEditor({
 
       {field.mode === "step" && (
         <div className="flex items-center gap-2 mt-2 text-xs text-[#858585]">
-          <span>从</span>
+          <span>{t.tools.cron.stepFrom}</span>
           <input
             type="number"
             min={min}
@@ -228,7 +232,7 @@ function FieldEditor({
             onChange={(e) => onChange({ ...field, stepStart: Number(e.target.value) })}
             className="w-14 bg-[#3c3c3c] border border-[#3e3e42] rounded px-2 py-1 text-sm text-[#d4d4d4] outline-none focus:border-[#0078d4]"
           />
-          <span>开始，每</span>
+          <span>{t.tools.cron.stepStartEvery}</span>
           <input
             type="number"
             min={1}
@@ -237,7 +241,7 @@ function FieldEditor({
             onChange={(e) => onChange({ ...field, stepEvery: Number(e.target.value) })}
             className="w-14 bg-[#3c3c3c] border border-[#3e3e42] rounded px-2 py-1 text-sm text-[#d4d4d4] outline-none focus:border-[#0078d4]"
           />
-          <span>执行一次</span>
+          <span>{t.tools.cron.stepRunOnce}</span>
         </div>
       )}
 
@@ -249,34 +253,44 @@ function FieldEditor({
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
-const MONTH_NAMES = [
-  "1月",
-  "2月",
-  "3月",
-  "4月",
-  "5月",
-  "6月",
-  "7月",
-  "8月",
-  "9月",
-  "10月",
-  "11月",
-  "12月",
-];
-const DOW_NAMES = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-
-const PRESETS: { label: string; expr: string }[] = [
-  { label: "每分钟", expr: "* * * * *" },
-  { label: "每小时", expr: "0 * * * *" },
-  { label: "每天 0 点", expr: "0 0 * * *" },
-  { label: "每周一 0 点", expr: "0 0 * * 1" },
-  { label: "每月 1 日 0 点", expr: "0 0 1 * *" },
-  { label: "每季度首日", expr: "0 0 1 1,4,7,10 *" },
-  { label: "工作日 9 点", expr: "0 9 * * 1-5" },
-  { label: "每 5 分钟", expr: "*/5 * * * *" },
-];
-
 export function CronTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
+  const MONTH_NAMES = [
+    `1 ${t.tools.cron.fieldMonth}`,
+    `2 ${t.tools.cron.fieldMonth}`,
+    `3 ${t.tools.cron.fieldMonth}`,
+    `4 ${t.tools.cron.fieldMonth}`,
+    `5 ${t.tools.cron.fieldMonth}`,
+    `6 ${t.tools.cron.fieldMonth}`,
+    `7 ${t.tools.cron.fieldMonth}`,
+    `8 ${t.tools.cron.fieldMonth}`,
+    `9 ${t.tools.cron.fieldMonth}`,
+    `10 ${t.tools.cron.fieldMonth}`,
+    `11 ${t.tools.cron.fieldMonth}`,
+    `12 ${t.tools.cron.fieldMonth}`,
+  ];
+  const DOW_NAMES = [
+    t.tools.cron.fieldWeekday,
+    `${t.tools.cron.fieldWeekday} 1`,
+    `${t.tools.cron.fieldWeekday} 2`,
+    `${t.tools.cron.fieldWeekday} 3`,
+    `${t.tools.cron.fieldWeekday} 4`,
+    `${t.tools.cron.fieldWeekday} 5`,
+    `${t.tools.cron.fieldWeekday} 6`,
+  ];
+
+  const PRESETS = [
+    { label: t.tools.cron.everyMinute, expr: "* * * * *" },
+    { label: t.tools.cron.everyHour, expr: "0 * * * *" },
+    { label: t.tools.cron.everyDay, expr: "0 0 * * *" },
+    { label: t.tools.cron.everyMonday, expr: "0 0 * * 1" },
+    { label: t.tools.cron.everyMonthStart, expr: "0 0 1 * *" },
+    { label: t.tools.cron.everyQuarterStart, expr: "0 0 1 1,4,7,10 *" },
+    { label: t.tools.cron.workdayNine, expr: "0 9 * * 1-5" },
+    { label: t.tools.cron.every5Minutes, expr: "*/5 * * * *" },
+  ];
+
   const [minute, setMinute] = useState(defaultField(0, 59));
   const [hour, setHour] = useState(defaultField(0, 23));
   const [dom, setDom] = useState(defaultField(1, 31));
@@ -323,7 +337,7 @@ export function CronTool() {
     <div className="flex flex-col gap-4 p-6 h-full overflow-auto">
       {/* Presets */}
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">常用预设</h3>
+        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">{t.tools.cron.presets}</h3>
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((p) => (
             <button
@@ -341,47 +355,47 @@ export function CronTool() {
 
       {/* Tab switcher */}
       <div className="flex gap-2">
-        {(["builder", "manual"] as const).map((t) => (
+        {(["builder", "manual"] as const).map((tabId) => (
           <button
-            key={t}
+            key={tabId}
             type="button"
-            onClick={() => setTab(t)}
+            onClick={() => setTab(tabId)}
             className={`px-4 py-1.5 text-sm rounded transition-colors ${
-              tab === t
+              tab === tabId
                 ? "bg-[#0078d4] text-white"
                 : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
             }`}
           >
-            {t === "builder" ? "可视化编辑" : "手动输入"}
+            {tabId === "builder" ? t.tools.cron.visual : t.tools.cron.expression}
           </button>
         ))}
       </div>
 
       {tab === "builder" ? (
         <div className="flex flex-col gap-3 bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-          <h3 className="text-sm font-medium text-[#d4d4d4] mb-1">可视化编辑器</h3>
-          <FieldEditor label="分" field={minute} min={0} max={59} onChange={setMinute} />
-          <FieldEditor label="时" field={hour} min={0} max={23} onChange={setHour} />
-          <FieldEditor label="日" field={dom} min={1} max={31} onChange={setDom} />
+          <h3 className="text-sm font-medium text-[#d4d4d4] mb-1">{t.tools.cron.visual}</h3>
+          <FieldEditor label={t.tools.cron.fieldMinute} field={minute} min={0} max={59} onChange={setMinute} />
+          <FieldEditor label={t.tools.cron.fieldHour} field={hour} min={0} max={23} onChange={setHour} />
+          <FieldEditor label={t.tools.cron.fieldDay} field={dom} min={1} max={31} onChange={setDom} />
           <FieldEditor
-            label="月"
+            label={t.tools.cron.fieldMonth}
             field={month}
             min={1}
             max={12}
             names={MONTH_NAMES}
             onChange={setMonth}
           />
-          <FieldEditor label="周" field={dow} min={0} max={6} names={DOW_NAMES} onChange={setDow} />
+          <FieldEditor label={t.tools.cron.fieldWeekday} field={dow} min={0} max={6} names={DOW_NAMES} onChange={setDow} />
         </div>
       ) : (
         <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-          <h3 className="text-sm font-medium text-[#d4d4d4] mb-2">Cron 表达式</h3>
-          <p className="text-xs text-[#858585] mb-2">格式: 分 时 日 月 周</p>
+          <h3 className="text-sm font-medium text-[#d4d4d4] mb-2">{t.tools.cron.expression}</h3>
+          <p className="text-xs text-[#858585] mb-2">{t.tools.cron.humanReadable}</p>
           <input
             type="text"
             value={manualExpr}
             onChange={(e) => setManualExpr(e.target.value)}
-            placeholder="例如: 0 9 * * 1-5"
+            placeholder={t.tools.cron.expressionPlaceholder}
             className="w-full bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#9cdcfe] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4]"
           />
         </div>
@@ -389,23 +403,23 @@ export function CronTool() {
 
       {/* Result */}
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">解析结果</h3>
+        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">{t.tools.cron.humanReadable}</h3>
         <div className="flex flex-col gap-3">
           <div>
-            <span className="text-xs text-[#858585] block mb-1">表达式</span>
+            <span className="text-xs text-[#858585] block mb-1">{t.tools.cron.expression}</span>
             <code className="text-[#9cdcfe] font-mono text-sm bg-[#1e1e1e] px-3 py-1.5 rounded block">
               {cronExpr || "—"}
             </code>
           </div>
           <div>
-            <span className="text-xs text-[#858585] block mb-1">描述</span>
+            <span className="text-xs text-[#858585] block mb-1">{t.tools.cron.humanReadable}</span>
             <div className="text-sm text-[#d4d4d4] bg-[#1e1e1e] px-3 py-1.5 rounded">
-              {description ?? <span className="text-red-400">无效的 Cron 表达式</span>}
+              {description ?? <span className="text-red-400">{t.tools.cron.invalidExpression}</span>}
             </div>
           </div>
           {nextTimes && nextTimes.length > 0 && (
             <div>
-              <span className="text-xs text-[#858585] block mb-1">接下来 5 次执行时间</span>
+              <span className="text-xs text-[#858585] block mb-1">{t.tools.cron.nextRuns}</span>
               <div className="flex flex-col gap-1">
                 {nextTimes.map((t, i) => (
                   <div
@@ -424,14 +438,14 @@ export function CronTool() {
 
       {/* Reference */}
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-        <h3 className="text-sm font-medium text-[#d4d4d4] mb-2">字段说明</h3>
+        <h3 className="text-sm font-medium text-[#d4d4d4] mb-2">{t.tools.cron.fields}</h3>
         <div className="grid grid-cols-5 gap-2 text-xs">
           {[
-            { f: "分", r: "0-59" },
-            { f: "时", r: "0-23" },
-            { f: "日", r: "1-31" },
-            { f: "月", r: "1-12" },
-            { f: "周", r: "0-6 (0=周日)" },
+            { f: t.tools.cron.fieldMinute, r: "0-59" },
+            { f: t.tools.cron.fieldHour, r: "0-23" },
+            { f: t.tools.cron.fieldDay, r: "1-31" },
+            { f: t.tools.cron.fieldMonth, r: "1-12" },
+            { f: t.tools.cron.fieldWeekday, r: "0-6" },
           ].map(({ f, r }) => (
             <div key={f} className="bg-[#1e1e1e] rounded p-2">
               <div className="text-[#9cdcfe] font-medium">{f}</div>
@@ -441,10 +455,10 @@ export function CronTool() {
         </div>
         <div className="mt-2 text-xs text-[#858585] space-y-0.5">
           <p>
-            <span className="text-[#9cdcfe]">*</span> 每个值 &nbsp;{" "}
-            <span className="text-[#9cdcfe]">,</span> 列举 &nbsp;{" "}
-            <span className="text-[#9cdcfe]">-</span> 范围 &nbsp;{" "}
-            <span className="text-[#9cdcfe]">/</span> 间隔步长
+            <span className="text-[#9cdcfe]">*</span> {t.tools.cron.legendAnyValue} &nbsp;{" "}
+            <span className="text-[#9cdcfe]">,</span> {t.tools.cron.legendList} &nbsp;{" "}
+            <span className="text-[#9cdcfe]">-</span> {t.tools.cron.legendRange} &nbsp;{" "}
+            <span className="text-[#9cdcfe]">/</span> {t.tools.cron.legendStep}
           </p>
         </div>
       </div>

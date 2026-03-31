@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 const CHARSETS = {
   upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -22,6 +24,8 @@ function secureRandom(charset: string, length: number, count: number): ResultIte
 }
 
 export function RandomStringTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [length, setLength] = useState(16);
   const [count, setCount] = useState(1);
   const [useUpper, setUseUpper] = useState(true);
@@ -39,7 +43,7 @@ export function RandomStringTool() {
     if (useSymbols) charset += CHARSETS.symbols;
 
     if (!charset) {
-      setError("请至少选择一种字符类型");
+      setError(t.tools.randomString.noCharSet);
       return;
     }
     setError("");
@@ -49,11 +53,11 @@ export function RandomStringTool() {
   return (
     <div className="flex h-full flex-col gap-6 overflow-auto p-6">
       <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
-        <h3 className="mb-4 text-sm font-medium text-[#d4d4d4]">生成选项</h3>
+        <h3 className="mb-4 text-sm font-medium text-[#d4d4d4]">{t.tools.randomString.genOptions}</h3>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <label htmlFor="rand-length" className="text-xs text-[#858585]">
-              长度:
+              {t.tools.randomString.length}
             </label>
             <input
               id="rand-length"
@@ -67,7 +71,7 @@ export function RandomStringTool() {
           </div>
           <div className="flex items-center gap-2">
             <label htmlFor="rand-count" className="text-xs text-[#858585]">
-              数量:
+              {t.tools.randomString.count}
             </label>
             <input
               id="rand-count"
@@ -82,12 +86,12 @@ export function RandomStringTool() {
           <div className="flex flex-wrap items-center gap-3">
             {(
               [
-                { key: "upper", label: "大写 (A-Z)", state: useUpper, set: setUseUpper },
-                { key: "lower", label: "小写 (a-z)", state: useLower, set: setUseLower },
-                { key: "digits", label: "数字 (0-9)", state: useDigits, set: setUseDigits },
-                { key: "symbols", label: "符号 (!@#…)", state: useSymbols, set: setUseSymbols },
+                { key: "upper", state: useUpper, set: setUseUpper },
+                { key: "lower", state: useLower, set: setUseLower },
+                { key: "digits", state: useDigits, set: setUseDigits },
+                { key: "symbols", state: useSymbols, set: setUseSymbols },
               ] as const
-            ).map(({ key, label, state, set }) => (
+            ).map(({ key, state, set }) => (
               <label
                 key={key}
                 className="flex cursor-pointer items-center gap-1.5 text-xs text-[#858585]"
@@ -98,7 +102,7 @@ export function RandomStringTool() {
                   onChange={(e) => set(e.target.checked)}
                   className="accent-[#007acc]"
                 />
-                {label}
+                {t.tools.randomString[key as keyof typeof t.tools.randomString]}
               </label>
             ))}
           </div>
@@ -107,7 +111,7 @@ export function RandomStringTool() {
             onClick={generate}
             className="rounded bg-[#007acc] px-4 py-1.5 text-sm text-white transition-colors hover:bg-[#005a9e]"
           >
-            生成
+            {t.tools.randomString.generate}
           </button>
         </div>
         {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
@@ -116,7 +120,7 @@ export function RandomStringTool() {
       {results.length > 0 && (
         <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-medium text-[#d4d4d4]">结果</h3>
+            <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.randomString.results}</h3>
             <CopyButton text={results.map((r) => r.value).join("\n")} />
           </div>
           <div className="flex flex-col gap-1.5">

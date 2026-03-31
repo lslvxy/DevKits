@@ -2,10 +2,14 @@ import yaml from "js-yaml";
 import { useEffect, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 type Mode = "yaml2json" | "json2yaml";
 
 export function YamlJsonTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [mode, setMode] = useState<Mode>("yaml2json");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
@@ -27,7 +31,7 @@ export function YamlJsonTool() {
       }
       setError("");
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(e instanceof Error ? e.message : t.tools.yamlJson.parseFailed);
       setOutput("");
     }
   }, [input, mode]);
@@ -52,14 +56,14 @@ export function YamlJsonTool() {
           onClick={() => switchMode("yaml2json")}
           className={tabCls(mode === "yaml2json")}
         >
-          YAML → JSON
+          {t.tools.yamlJson.yamlToJson}
         </button>
         <button
           type="button"
           onClick={() => switchMode("json2yaml")}
           className={tabCls(mode === "json2yaml")}
         >
-          JSON → YAML
+          {t.tools.yamlJson.jsonToYaml}
         </button>
       </div>
 
@@ -68,12 +72,12 @@ export function YamlJsonTool() {
           left={
             <div className="flex h-full flex-col gap-2 p-3">
               <h3 className="text-sm font-medium text-[#d4d4d4]">
-                {mode === "yaml2json" ? "YAML 输入" : "JSON 输入"}
+                {mode === "yaml2json" ? "YAML" : "JSON"} {t.tools.yamlJson.input}
               </h3>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={`输入 ${mode === "yaml2json" ? "YAML" : "JSON"}...`}
+                placeholder={mode === "yaml2json" ? t.tools.yamlJson.input : t.tools.yamlJson.input}
                 className="flex-1 resize-none rounded border border-[#3e3e42] bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#d4d4d4] outline-none focus:border-[#007acc]"
               />
               {error && <p className="text-xs text-red-400">{error}</p>}
@@ -83,7 +87,7 @@ export function YamlJsonTool() {
             <div className="flex h-full flex-col gap-2 p-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium text-[#d4d4d4]">
-                  {mode === "yaml2json" ? "JSON 输出" : "YAML 输出"}
+                  {mode === "yaml2json" ? "JSON" : "YAML"} {t.tools.yamlJson.output}
                 </h3>
                 <CopyButton text={output} />
               </div>

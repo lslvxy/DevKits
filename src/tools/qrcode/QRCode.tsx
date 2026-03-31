@@ -2,10 +2,14 @@ import jsQR from "jsqr";
 import QRCode from "qrcode";
 import { useEffect, useRef, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 type Tab = "generate" | "decode";
 
 export function QRCodeTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [tab, setTab] = useState<Tab>("generate");
 
   // Generate
@@ -71,7 +75,7 @@ export function QRCodeTool() {
         if (result) {
           setDecodeResult(result.data);
         } else {
-          setDecodeError("未识别到 QR 码，请确保图片清晰完整");
+          setDecodeError(t.tools.qrcode.decodeFailed);
         }
       };
       img.src = src;
@@ -92,27 +96,27 @@ export function QRCodeTool() {
           onClick={() => setTab("generate")}
           className={tabCls(tab === "generate")}
         >
-          生成
+          {t.tools.qrcode.generateTab}
         </button>
         <button type="button" onClick={() => setTab("decode")} className={tabCls(tab === "decode")}>
-          解析
+          {t.tools.qrcode.decodeTab}
         </button>
       </div>
 
       {tab === "generate" && (
         <>
           <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
-            <h3 className="mb-3 text-sm font-medium text-[#d4d4d4]">输入文本或链接</h3>
+            <h3 className="mb-3 text-sm font-medium text-[#d4d4d4]">{t.tools.qrcode.inputPlaceholder}</h3>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="输入要编码为 QR 码的内容..."
+              placeholder={t.tools.qrcode.inputPlaceholder}
               className="h-24 w-full resize-none rounded border border-[#3e3e42] bg-[#1e1e1e] px-3 py-2 text-sm text-[#d4d4d4] outline-none focus:border-[#007acc]"
             />
             <div className="mt-3 flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <label htmlFor="qr-size" className="text-xs text-[#858585]">
-                  尺寸:
+                  {t.tools.qrcode.size}
                 </label>
                 <select
                   id="qr-size"
@@ -120,9 +124,9 @@ export function QRCodeTool() {
                   onChange={(e) => setSize(Number(e.target.value))}
                   className="rounded border border-[#3e3e42] bg-[#1e1e1e] px-2 py-1 text-sm text-[#d4d4d4] outline-none focus:border-[#007acc]"
                 >
-                  <option value={128}>小 (128px)</option>
-                  <option value={256}>中 (256px)</option>
-                  <option value={512}>大 (512px)</option>
+                  <option value={128}>S</option>
+                  <option value={256}>M</option>
+                  <option value={512}>L</option>
                 </select>
               </div>
             </div>
@@ -132,13 +136,13 @@ export function QRCodeTool() {
           {qrUrl && (
             <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-[#d4d4d4]">二维码</h3>
+                <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.qrcode.download}</h3>
                 <button
                   type="button"
                   onClick={handleDownload}
                   className="rounded bg-[#007acc] px-4 py-1.5 text-sm text-white transition-colors hover:bg-[#005a9e]"
                 >
-                  下载
+                  {t.tools.qrcode.download}
                 </button>
               </div>
               <img src={qrUrl} alt="Generated QR Code" className="rounded" />
@@ -150,7 +154,7 @@ export function QRCodeTool() {
       {tab === "decode" && (
         <>
           <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
-            <h3 className="mb-3 text-sm font-medium text-[#d4d4d4]">上传 QR 码图片</h3>
+            <h3 className="mb-3 text-sm font-medium text-[#d4d4d4]">{t.tools.qrcode.scanPrompt}</h3>
             <input
               ref={decodeFileRef}
               type="file"
@@ -164,14 +168,14 @@ export function QRCodeTool() {
               onClick={() => decodeFileRef.current?.click()}
               className="rounded bg-[#007acc] px-4 py-1.5 text-sm text-white transition-colors hover:bg-[#005a9e]"
             >
-              选择图片
+              {t.tools.qrcode.chooseImage}
             </button>
             {decodeError && <p className="mt-2 text-sm text-red-400">{decodeError}</p>}
           </div>
 
           {decodePreview && (
             <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
-              <h3 className="mb-3 text-sm font-medium text-[#d4d4d4]">图片预览</h3>
+              <h3 className="mb-3 text-sm font-medium text-[#d4d4d4]">{t.tools.qrcode.imagePreview}</h3>
               <img
                 src={decodePreview}
                 alt="uploaded QR"
@@ -183,7 +187,7 @@ export function QRCodeTool() {
           {decodeResult && (
             <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-[#d4d4d4]">解析结果</h3>
+                <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.qrcode.decodeResult}</h3>
                 <CopyButton text={decodeResult} />
               </div>
               <div className="break-all rounded bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#9cdcfe]">

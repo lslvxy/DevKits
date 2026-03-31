@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { DualPanel } from "../../components/DualPanel.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 const DEFAULT_CODE = `@startuml
 Alice -> Bob: Hello
@@ -13,6 +15,8 @@ function toHex(text: string): string {
 }
 
 export function PlantUMLTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [code, setCode] = useState(DEFAULT_CODE);
   const [imgUrl, setImgUrl] = useState("");
 
@@ -33,23 +37,23 @@ export function PlantUMLTool() {
         <DualPanel
           left={
             <div className="flex h-full flex-col gap-2 p-3">
-              <h3 className="text-sm font-medium text-[#d4d4d4]">PlantUML 代码</h3>
+              <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.plantuml.editor}</h3>
               <textarea
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 className="flex-1 resize-none rounded border border-[#3e3e42] bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#d4d4d4] outline-none focus:border-[#007acc]"
               />
-              <p className="text-xs text-[#858585]">⚠️ 需要网络连接（使用 plantuml.com 服务）</p>
+              <p className="text-xs text-[#858585]">⚠️ {t.tools.plantuml.emptyPrompt}</p>
             </div>
           }
           right={
             <div className="flex h-full flex-col gap-2 p-3">
-              <h3 className="text-sm font-medium text-[#d4d4d4]">预览</h3>
+              <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.plantuml.preview}</h3>
               <div className="flex flex-1 items-center justify-center overflow-auto rounded border border-[#3e3e42] bg-[#1e1e1e] p-4">
                 {imgUrl ? (
                   <img src={imgUrl} alt="PlantUML diagram" className="max-w-full" />
                 ) : (
-                  <p className="text-sm text-[#858585]">输入 PlantUML 代码以预览</p>
+                  <p className="text-sm text-[#858585]">{t.tools.plantuml.emptyPrompt}</p>
                 )}
               </div>
             </div>

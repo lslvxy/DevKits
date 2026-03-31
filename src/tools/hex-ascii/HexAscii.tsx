@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 type Mode = "ascii2hex" | "hex2ascii";
 
 export function HexAsciiTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [mode, setMode] = useState<Mode>("ascii2hex");
   const [input, setInput] = useState("");
   const [uppercase, setUppercase] = useState(false);
@@ -41,12 +45,12 @@ export function HexAsciiTool() {
         setAsciiOut("");
       } else {
         const clean = input.replace(/\s+/g, "");
-        if (clean.length % 2 !== 0) throw new Error("十六进制字符串长度必须为偶数");
+        if (clean.length % 2 !== 0) throw new Error(t.tools.hexAscii.invalidHex);
         const pairs = clean.match(/.{2}/g) ?? [];
         const ascii = pairs
           .map((b) => {
             const code = Number.parseInt(b, 16);
-            if (Number.isNaN(code)) throw new Error(`无效的十六进制字节: ${b}`);
+            if (Number.isNaN(code)) throw new Error(`${t.tools.hexAscii.invalidHex}: ${b}`);
             return String.fromCharCode(code);
           })
           .join("");
@@ -100,7 +104,7 @@ export function HexAsciiTool() {
                 onChange={(e) => setUppercase(e.target.checked)}
                 className="accent-[#007acc]"
               />
-              大写
+              {t.tools.hexAscii.uppercase}
             </label>
             <label className="flex cursor-pointer items-center gap-1.5 text-xs text-[#858585]">
               <input
@@ -109,7 +113,7 @@ export function HexAsciiTool() {
                 onChange={(e) => setSpaceSep(e.target.checked)}
                 className="accent-[#007acc]"
               />
-              空格分隔
+              {t.tools.hexAscii.spaceSeparated}
             </label>
           </div>
         )}
@@ -119,7 +123,7 @@ export function HexAsciiTool() {
         {/* Input */}
         <div className="flex flex-col gap-2 rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
           <h3 className="text-sm font-medium text-[#d4d4d4]">
-            {mode === "ascii2hex" ? "ASCII 输入" : "Hex 输入"}
+            {mode === "ascii2hex" ? t.tools.hexAscii.input : t.tools.hexAscii.input}
           </h3>
           <textarea
             value={input}
@@ -129,8 +133,8 @@ export function HexAsciiTool() {
             }}
             placeholder={
               mode === "ascii2hex"
-                ? "输入 ASCII 文本，例如: Hello"
-                : "输入十六进制，例如: 48 65 6c 6c 6f"
+                ? t.tools.hexAscii.asciiPlaceholder
+                : t.tools.hexAscii.hexPlaceholder
             }
             className="min-h-32 flex-1 resize-none rounded border border-[#3e3e42] bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#d4d4d4] outline-none focus:border-[#007acc]"
           />
@@ -139,13 +143,13 @@ export function HexAsciiTool() {
 
         {/* Output */}
         <div className="flex flex-col gap-3 rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
-          <h3 className="text-sm font-medium text-[#d4d4d4]">转换结果</h3>
+          <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.hexAscii.output}</h3>
 
           {mode === "ascii2hex" && input && (
             <>
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#858585]">十六进制</span>
+                  <span className="text-xs text-[#858585]">{t.tools.hexAscii.hexOutput}</span>
                   <CopyButton text={hexOut} />
                 </div>
                 <div className="break-all rounded bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#9cdcfe]">
@@ -154,7 +158,7 @@ export function HexAsciiTool() {
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#858585]">十进制</span>
+                  <span className="text-xs text-[#858585]">{t.tools.hexAscii.decOutput}</span>
                   <CopyButton text={decOut} />
                 </div>
                 <div className="break-all rounded bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#4ec9b0]">
@@ -163,7 +167,7 @@ export function HexAsciiTool() {
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#858585]">二进制</span>
+                  <span className="text-xs text-[#858585]">{t.tools.hexAscii.binOutput}</span>
                   <CopyButton text={binOut} />
                 </div>
                 <div className="break-all rounded bg-[#1e1e1e] px-3 py-2 font-mono text-xs text-[#ce9178]">
@@ -176,7 +180,7 @@ export function HexAsciiTool() {
           {mode === "hex2ascii" && input && !error && (
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[#858585]">ASCII 文本</span>
+                <span className="text-xs text-[#858585]">{t.tools.hexAscii.asciiOutput}</span>
                 <CopyButton text={asciiOut} />
               </div>
               <div className="break-all rounded bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#d4d4d4]">
@@ -185,7 +189,7 @@ export function HexAsciiTool() {
             </div>
           )}
 
-          {!input && <p className="text-sm text-[#858585]">输入内容后查看结果</p>}
+                  {!input && <p className="text-sm text-[#858585]">{t.tools.hexAscii.emptyPrompt}</p>}
         </div>
       </div>
     </div>

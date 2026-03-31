@@ -2,10 +2,14 @@ import Papa from "papaparse";
 import { useEffect, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 type Mode = "csv2json" | "json2csv";
 
 export function CsvJsonTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [mode, setMode] = useState<Mode>("csv2json");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
@@ -74,12 +78,12 @@ export function CsvJsonTool() {
           left={
             <div className="flex h-full flex-col gap-2 p-3">
               <h3 className="text-sm font-medium text-[#d4d4d4]">
-                {mode === "csv2json" ? "CSV 输入" : "JSON 输入"}
+                {mode === "csv2json" ? t.tools.csvJson.csvInput : t.tools.csvJson.jsonInput}
               </h3>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={`输入 ${mode === "csv2json" ? "CSV" : "JSON"}...`}
+                placeholder={`${t.tools.csvJson.inputPlaceholder} ${mode === "csv2json" ? "CSV" : "JSON"}...`}
                 className="flex-1 resize-none rounded border border-[#3e3e42] bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#d4d4d4] outline-none focus:border-[#007acc]"
               />
               {error && <p className="text-xs text-red-400">{error}</p>}
@@ -89,7 +93,7 @@ export function CsvJsonTool() {
             <div className="flex h-full flex-col gap-2 p-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium text-[#d4d4d4]">
-                  {mode === "csv2json" ? "JSON 输出" : "CSV 输出"}
+                  {mode === "csv2json" ? t.tools.csvJson.jsonOutput : t.tools.csvJson.csvOutput}
                 </h3>
                 <CopyButton text={output} />
               </div>

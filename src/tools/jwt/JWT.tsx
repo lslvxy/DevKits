@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 import { CopyButton } from "../../components/CopyButton.tsx";
 
 function base64urlDecode(str: string): string {
@@ -28,6 +30,8 @@ type JwtData = {
 };
 
 export function JWTTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [input, setInput] = useState("");
   const [data, setData] = useState<JwtData | null>(null);
   const [error, setError] = useState("");
@@ -41,7 +45,7 @@ export function JWTTool() {
     }
     const parts = token.trim().split(".");
     if (parts.length !== 3) {
-      setError("无效的 JWT：需要恰好 3 个部分（header.payload.signature）");
+      setError(t.tools.jwt.invalidJwt);
       setData(null);
       return;
     }
@@ -51,7 +55,7 @@ export function JWTTool() {
       setData({ header, payload, signature: parts[2] });
       setError("");
     } catch (e) {
-      setError(`解析失败：${e instanceof Error ? e.message : String(e)}`);
+      setError(`${t.tools.jwt.parseFailed}${e instanceof Error ? e.message : String(e)}`);
       setData(null);
     }
   };
@@ -65,11 +69,11 @@ export function JWTTool() {
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto">
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">JWT Token</h3>
+        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">{t.tools.jwt.jwtToken}</h3>
         <textarea
           value={input}
           onChange={(e) => decode(e.target.value)}
-          placeholder="粘贴 JWT Token（格式: xxxxx.yyyyy.zzzzz）..."
+          placeholder={t.tools.jwt.jwtPlaceholder}
           className="h-24 w-full resize-none rounded border border-[#3e3e42] bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#d4d4d4] outline-none focus:border-[#007acc]"
         />
         {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
@@ -82,7 +86,7 @@ export function JWTTool() {
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-medium text-[#d4d4d4]">
                 Header
-                <span className="ml-2 text-xs text-[#858585]">（算法 & 类型）</span>
+                <span className="ml-2 text-xs text-[#858585]">{t.tools.jwt.headerSubtitle}</span>
               </h3>
               <CopyButton text={fmt(data.header)} />
             </div>
@@ -102,7 +106,7 @@ export function JWTTool() {
                       isExpired ? "bg-red-900/50 text-red-400" : "bg-green-900/50 text-green-400"
                     }`}
                   >
-                    {isExpired ? "已过期" : "有效"}
+                    {isExpired ? t.tools.jwt.expired : t.tools.jwt.valid}
                   </span>
                 )}
               </h3>
@@ -114,12 +118,12 @@ export function JWTTool() {
             <div className="mt-2 flex flex-col gap-1">
               {exp !== undefined && (
                 <p className="text-xs text-[#858585]">
-                  过期时间：<span className="text-[#d4d4d4]">{formatTs(exp)}</span>
+                  {t.tools.jwt.expiresAt}：<span className="text-[#d4d4d4]">{formatTs(exp)}</span>
                 </p>
               )}
               {iat !== undefined && (
                 <p className="text-xs text-[#858585]">
-                  签发时间：<span className="text-[#d4d4d4]">{formatTs(iat)}</span>
+                  {t.tools.jwt.issuedAt}：<span className="text-[#d4d4d4]">{formatTs(iat)}</span>
                 </p>
               )}
             </div>

@@ -1,7 +1,11 @@
 import { useState } from "react";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 import { CopyButton } from "../../components/CopyButton.tsx";
 
 export function TimestampTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [tsInput, setTsInput] = useState("");
   const [dateInput, setDateInput] = useState("");
   const [tsResult, setTsResult] = useState<string | null>(null);
@@ -18,7 +22,7 @@ export function TimestampTool() {
     }
     const n = Number(v.trim());
     if (Number.isNaN(n)) {
-      setTsError("无效的时间戳");
+      setTsError(t.tools.timestamp.invalidTimestamp);
       setTsResult(null);
       return;
     }
@@ -26,7 +30,7 @@ export function TimestampTool() {
     const ms = n > 1e12 ? n : n * 1000;
     const d = new Date(ms);
     if (Number.isNaN(d.getTime())) {
-      setTsError("无效的时间戳");
+      setTsError(t.tools.timestamp.invalidTimestamp);
       setTsResult(null);
       return;
     }
@@ -43,7 +47,7 @@ export function TimestampTool() {
     }
     const d = new Date(v.trim());
     if (Number.isNaN(d.getTime())) {
-      setDateError("无效的日期格式");
+      setDateError(t.tools.timestamp.invalidDateFormat);
       setDateResult(null);
       return;
     }
@@ -58,7 +62,7 @@ export function TimestampTool() {
       {/* Now */}
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium text-[#d4d4d4]">当前时间</h3>
+          <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.timestamp.currentTime}</h3>
           <CopyButton text={nowTs} />
         </div>
         <p className="text-lg font-mono text-[#9cdcfe]">{nowTs}</p>
@@ -67,12 +71,12 @@ export function TimestampTool() {
 
       {/* Timestamp → Date */}
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">时间戳 → 日期</h3>
+        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">{t.tools.timestamp.tsToDate}</h3>
         <input
           type="text"
           value={tsInput}
           onChange={(e) => convertTimestamp(e.target.value)}
-          placeholder="输入时间戳 (秒或毫秒)..."
+          placeholder={t.tools.timestamp.tsPlaceholder}
           className="w-full bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm font-mono text-[#d4d4d4] outline-none focus:border-[#007acc]"
         />
         {tsError && <p className="text-red-400 text-xs mt-2">{tsError}</p>}
@@ -86,12 +90,12 @@ export function TimestampTool() {
 
       {/* Date → Timestamp */}
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">日期 → 时间戳</h3>
+        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">{t.tools.timestamp.dateToTs}</h3>
         <input
           type="text"
           value={dateInput}
           onChange={(e) => convertDate(e.target.value)}
-          placeholder="输入日期 (如 2024-01-01 12:00:00)..."
+          placeholder={t.tools.timestamp.datePlaceholder}
           className="w-full bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm font-mono text-[#d4d4d4] outline-none focus:border-[#007acc]"
         />
         {dateError && <p className="text-red-400 text-xs mt-2">{dateError}</p>}

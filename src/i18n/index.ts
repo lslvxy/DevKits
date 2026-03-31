@@ -9,6 +9,8 @@ export type Translations = {
     loadingTool: string;
     welcomeSubtitle: string;
     welcomeHint: string;
+    copy: string;
+    copied: string;
   };
   categories: {
     text: string;
@@ -72,6 +74,10 @@ export type Translations = {
       invalidJwt: string;
       parseFailed: string;
       headerSubtitle: string;
+        expired: string;
+        valid: string;
+        expiresAt: string;
+        issuedAt: string;
       expired: string;
       valid: string;
       expiry: string;
@@ -129,6 +135,7 @@ export type Translations = {
       ascii2hex: string;
       hex2ascii: string;
       input: string;
+      output: string;
       asciiPlaceholder: string;
       hexPlaceholder: string;
       uppercase: string;
@@ -138,6 +145,7 @@ export type Translations = {
       binOutput: string;
       asciiOutput: string;
       invalidHex: string;
+      emptyPrompt: string;
     };
     logParser: {
       inputPlaceholder: string;
@@ -195,6 +203,11 @@ export type Translations = {
       matched: string;
       noMatch: string;
       invalidRegex: string;
+      highlightTitle: string;
+      detailsTitle: string;
+      position: string;
+      length: string;
+      groups: string;
     };
     rsaKeygen: {
       keySize: string;
@@ -202,6 +215,18 @@ export type Translations = {
       generating: string;
       publicKey: string;
       privateKey: string;
+      algorithm: string;
+      rsaOAEP: string;
+      rsaOAEPDesc: string;
+      rsaPKCS: string;
+      rsaPKCSDesc: string;
+      warning4096: string;
+      info: string;
+      keysGeneratedWith: string;
+      rsaOAEPInfo: string;
+      rsaPKCSInfo: string;
+      keyFormatInfo: string;
+      keepPrivateKeySecret: string;
     };
     sqlFormat: {
       dialect: string;
@@ -226,6 +251,18 @@ export type Translations = {
       noDiff: string;
     };
     urlCodec: {
+        encodeComponent: string;
+        decodeComponent: string;
+        encodeURI: string;
+        decodeURI: string;
+        info: string;
+        emptyPrompt: string;
+        clear: string;
+        modeSelectionInfo: string;
+        encodeComponentDesc: string;
+        decodeComponentDesc: string;
+        encodeURIDesc: string;
+        decodeURIDesc: string;
       encode: string;
       decode: string;
       input: string;
@@ -254,6 +291,26 @@ export type Translations = {
       fieldDay: string;
       fieldMonth: string;
       fieldWeekday: string;
+      everyPrefix: string;
+      modeSpecific: string;
+      modeRange: string;
+      modeStep: string;
+      rangeTo: string;
+      stepFrom: string;
+      stepStartEvery: string;
+      stepRunOnce: string;
+      legendAnyValue: string;
+      legendList: string;
+      legendRange: string;
+      legendStep: string;
+      everyMinute: string;
+      everyHour: string;
+      everyDay: string;
+      everyMonday: string;
+      everyMonthStart: string;
+      everyQuarterStart: string;
+      workdayNine: string;
+      every5Minutes: string;
       invalidExpression: string;
       visual: string;
       presets: string;
@@ -269,6 +326,8 @@ export const translations: Record<Locale, Translations> = {
       loadingTool: "加载中...",
       welcomeSubtitle: "插件化开发者工具集",
       welcomeHint: "从左侧选择一个工具开始使用",
+      copy: "📋 复制",
+      copied: "✓ 已复制",
     },
     categories: {
       text: "📋 文本",
@@ -328,14 +387,15 @@ export const translations: Record<Locale, Translations> = {
       },
       jwt: {
         jwtToken: "JWT Token",
+          expired: "已过期",
+          valid: "有效",
+          expiresAt: "过期时间",
+          issuedAt: "签发时间",
         jwtPlaceholder: "粘贴 JWT Token（格式: xxxxx.yyyyy.zzzzz）...",
         invalidJwt: "无效的 JWT：需要恰好 3 个部分（header.payload.signature）",
         parseFailed: "解析失败：",
         headerSubtitle: "（算法 & 类型）",
-        expired: "已过期",
-        valid: "有效",
         expiry: "过期时间：",
-        issuedAt: "签发时间：",
       },
       jsonFormatter: {
         format: "格式化",
@@ -389,6 +449,7 @@ export const translations: Record<Locale, Translations> = {
       hexAscii: {
         ascii2hex: "ASCII → Hex",
         hex2ascii: "Hex → ASCII",
+          output: "输出",
         input: "输入",
         asciiPlaceholder: "输入 ASCII 文本...",
         hexPlaceholder: "输入 Hex 字符串 (如: 48 65 6c 6c 6f)...",
@@ -399,6 +460,7 @@ export const translations: Record<Locale, Translations> = {
         binOutput: "Binary",
         asciiOutput: "ASCII",
         invalidHex: "无效的 Hex 字符串",
+        emptyPrompt: "输入内容后查看结果",
       },
       logParser: {
         inputPlaceholder: "粘贴日志内容...",
@@ -456,6 +518,11 @@ export const translations: Record<Locale, Translations> = {
         matched: "个匹配",
         noMatch: "无匹配",
         invalidRegex: "无效的正则表达式",
+        highlightTitle: "匹配高亮",
+        detailsTitle: "匹配详情",
+        position: "位置",
+        length: "长度",
+        groups: "分组",
       },
       rsaKeygen: {
         keySize: "密钥长度:",
@@ -463,6 +530,18 @@ export const translations: Record<Locale, Translations> = {
         generating: "生成中...",
         publicKey: "公钥 (Public Key)",
         privateKey: "私钥 (Private Key)",
+        algorithm: "算法",
+        rsaOAEP: "RSA-OAEP (加密)",
+        rsaPKCS: "PKCS1-v1.5 (签名)",
+        rsaOAEPDesc: "RSA-OAEP",
+        rsaPKCSDesc: "RSASSA-PKCS1-v1_5",
+        warning4096: "⚠️ 4096 位密钥生成可能需要几秒钟时间",
+        info: "说明",
+        keysGeneratedWith: "密钥使用浏览器内置 Web Crypto API 生成，不会发送到任何服务器",
+        rsaOAEPInfo: "RSA-OAEP：适用于数据加密/解密场景",
+        rsaPKCSInfo: "RSASSA-PKCS1-v1_5：适用于数字签名/验证场景",
+        keyFormatInfo: "公钥格式：SPKI (SubjectPublicKeyInfo)，私钥格式：PKCS#8",
+        keepPrivateKeySecret: "⚠️ 请妥善保管",
       },
       sqlFormat: {
         dialect: "方言:",
@@ -493,6 +572,18 @@ export const translations: Record<Locale, Translations> = {
         output: "输出",
         inputEncodePlaceholder: "输入要编码的 URL...",
         inputDecodePlaceholder: "输入要解码的 URL...",
+          encodeComponent: "编码组件",
+          decodeComponent: "解码组件",
+          encodeURI: "编码 URI",
+          decodeURI: "解码 URI",
+          info: "说明",
+          emptyPrompt: "输出将显示在此处",
+          clear: "清空",
+          modeSelectionInfo: "Encode/Decode Modes",
+          encodeComponentDesc: "编码组件 (encodeURIComponent)：编码 URL 组件中的特殊字符，包括 / ? # & = + 等",
+          decodeComponentDesc: "解码组件 (decodeURIComponent)：解码通过 encodeURIComponent 编码的字符串",
+          encodeURIDesc: "编码 URI (encodeURI)：编码完整 URI，保留 : / ? # [ ] @ 等 URI 结构字符",
+          decodeURIDesc: "解码 URI (decodeURI)：解码通过 encodeURI 编码的完整 URI",
         outputPlaceholder: "结果将显示在这里...",
         processFailed: "处理失败",
       },
@@ -515,6 +606,26 @@ export const translations: Record<Locale, Translations> = {
         fieldDay: "日",
         fieldMonth: "月",
         fieldWeekday: "周",
+        everyPrefix: "每",
+        modeSpecific: "指定",
+        modeRange: "范围",
+        modeStep: "间隔",
+        rangeTo: "到",
+        stepFrom: "从",
+        stepStartEvery: "开始，每",
+        stepRunOnce: "执行一次",
+        legendAnyValue: "每个值",
+        legendList: "列举",
+        legendRange: "范围",
+        legendStep: "间隔步长",
+        everyMinute: "每分钟",
+        everyHour: "每小时",
+        everyDay: "每天",
+        everyMonday: "每周一",
+        everyMonthStart: "每月 1 号",
+        everyQuarterStart: "每季度第一天",
+        workdayNine: "工作日 9:00",
+        every5Minutes: "每 5 分钟",
         invalidExpression: "无效的 Cron 表达式",
         visual: "可视化构建器",
         presets: "预设",
@@ -528,6 +639,8 @@ export const translations: Record<Locale, Translations> = {
       loadingTool: "Loading...",
       welcomeSubtitle: "Pluggable Developer Toolkit",
       welcomeHint: "Select a tool from the sidebar to get started",
+      copy: "📋 Copy",
+      copied: "✓ Copied",
     },
     categories: {
       text: "📋 Text",
@@ -592,11 +705,12 @@ export const translations: Record<Locale, Translations> = {
         jwtPlaceholder: "Paste JWT Token (format: xxxxx.yyyyy.zzzzz)...",
         invalidJwt: "Invalid JWT: must have exactly 3 parts (header.payload.signature)",
         parseFailed: "Parse failed: ",
+          expired: "Expired",
+          valid: "Valid",
+          expiresAt: "Expires at",
+          issuedAt: "Issued at",
         headerSubtitle: "(algorithm & type)",
-        expired: "Expired",
-        valid: "Valid",
         expiry: "Expiry: ",
-        issuedAt: "Issued at: ",
       },
       jsonFormatter: {
         format: "Format",
@@ -660,6 +774,7 @@ export const translations: Record<Locale, Translations> = {
         binOutput: "Binary",
         asciiOutput: "ASCII",
         invalidHex: "Invalid Hex string",
+        emptyPrompt: "Enter text to see results",
       },
       logParser: {
         inputPlaceholder: "Paste log content here...",
@@ -713,6 +828,11 @@ export const translations: Record<Locale, Translations> = {
         multilineFlag: "Multiline",
         testInput: "Test Input",
         testPlaceholder: "Enter text to test...",
+          highlightTitle: "Match highlight",
+          detailsTitle: "Match details",
+          position: "Position",
+          length: "Length",
+          groups: "Groups",
         results: "Match Results",
         matched: "match(es)",
         noMatch: "No match",
@@ -724,6 +844,18 @@ export const translations: Record<Locale, Translations> = {
         generating: "Generating...",
         publicKey: "Public Key",
         privateKey: "Private Key",
+        algorithm: "Algorithm",
+        rsaOAEP: "RSA-OAEP (Encryption)",
+        rsaPKCS: "PKCS1-v1.5 (Signing)",
+        rsaOAEPDesc: "RSA-OAEP",
+        rsaPKCSDesc: "RSASSA-PKCS1-v1_5",
+        warning4096: "⚠️ Generating 4096-bit keys may take several seconds",
+        info: "Info",
+        keysGeneratedWith: "Keys are generated using the browser's built-in Web Crypto API and are not sent to any server",
+        rsaOAEPInfo: "RSA-OAEP: Suitable for data encryption/decryption scenarios",
+        rsaPKCSInfo: "RSASSA-PKCS1-v1_5: Suitable for digital signing/verification scenarios",
+        keyFormatInfo: "Public key format: SPKI (SubjectPublicKeyInfo), Private key format: PKCS#8",
+        keepPrivateKeySecret: "⚠️ Keep the private key safe",
       },
       sqlFormat: {
         dialect: "Dialect:",
@@ -754,6 +886,18 @@ export const translations: Record<Locale, Translations> = {
         output: "Output",
         inputEncodePlaceholder: "Enter URL to encode...",
         inputDecodePlaceholder: "Enter URL to decode...",
+          encodeComponent: "Encode Component",
+          decodeComponent: "Decode Component",
+          encodeURI: "Encode URI",
+          decodeURI: "Decode URI",
+          info: "Info",
+          emptyPrompt: "Output will appear here",
+          clear: "Clear",
+          modeSelectionInfo: "Encode/Decode Modes",
+          encodeComponentDesc: "Encode Component (encodeURIComponent): Encodes special characters in URL components, including / ? # & = + etc.",
+          decodeComponentDesc: "Decode Component (decodeURIComponent): Decodes strings encoded with encodeURIComponent",
+          encodeURIDesc: "Encode URI (encodeURI): Encodes full URI while preserving structural characters like : / ? # [ ] @ etc.",
+          decodeURIDesc: "Decode URI (decodeURI): Decodes full URI encoded with encodeURI",
         outputPlaceholder: "Result will appear here...",
         processFailed: "Processing failed",
       },
@@ -776,6 +920,26 @@ export const translations: Record<Locale, Translations> = {
         fieldDay: "Day",
         fieldMonth: "Month",
         fieldWeekday: "Weekday",
+        everyPrefix: "Every",
+        modeSpecific: "Specific",
+        modeRange: "Range",
+        modeStep: "Step",
+        rangeTo: "to",
+        stepFrom: "from",
+        stepStartEvery: "start, every",
+        stepRunOnce: "run once",
+        legendAnyValue: "any value",
+        legendList: "list",
+        legendRange: "range",
+        legendStep: "step interval",
+        everyMinute: "Every minute",
+        everyHour: "Every hour",
+        everyDay: "Every day",
+        everyMonday: "Every Monday",
+        everyMonthStart: "Start of every month",
+        everyQuarterStart: "Start of every quarter",
+        workdayNine: "Weekdays at 9:00",
+        every5Minutes: "Every 5 minutes",
         invalidExpression: "Invalid Cron expression",
         visual: "Visual Builder",
         presets: "Presets",

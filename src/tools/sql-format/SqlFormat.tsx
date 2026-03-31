@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { format } from "sql-formatter";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 type Dialect = "sql" | "mysql" | "postgresql" | "transactsql";
 
@@ -13,6 +15,8 @@ const DIALECTS: { value: Dialect; label: string }[] = [
 ];
 
 export function SqlFormatTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
@@ -44,7 +48,7 @@ export function SqlFormatTool() {
       <div className="flex flex-wrap items-center gap-4 rounded-lg border border-[#3e3e42] bg-[#252526] p-3">
         <div className="flex items-center gap-2">
           <label htmlFor="sql-dialect" className="text-xs text-[#858585]">
-            方言:
+            {t.tools.sqlFormat.dialect}
           </label>
           <select
             id="sql-dialect"
@@ -61,7 +65,7 @@ export function SqlFormatTool() {
         </div>
         <div className="flex items-center gap-2">
           <label htmlFor="sql-indent" className="text-xs text-[#858585]">
-            缩进:
+            Indent:
           </label>
           <select
             id="sql-indent"
@@ -79,11 +83,11 @@ export function SqlFormatTool() {
         <DualPanel
           left={
             <div className="flex h-full flex-col gap-2 p-3">
-              <h3 className="text-sm font-medium text-[#d4d4d4]">输入 SQL</h3>
+              <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.sqlFormat.input}</h3>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="输入 SQL 语句..."
+                placeholder={t.tools.sqlFormat.input}
                 className="flex-1 resize-none rounded border border-[#3e3e42] bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#d4d4d4] outline-none focus:border-[#007acc]"
               />
               {error && <p className="text-xs text-red-400">{error}</p>}
@@ -92,7 +96,7 @@ export function SqlFormatTool() {
           right={
             <div className="flex h-full flex-col gap-2 p-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-[#d4d4d4]">格式化结果</h3>
+                <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.sqlFormat.output}</h3>
                 <CopyButton text={output} />
               </div>
               <textarea

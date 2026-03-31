@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 type RegexFlag = "g" | "i" | "m" | "s";
 
@@ -29,7 +31,7 @@ function runRegex(
     }
     return { matches, error: null };
   } catch (e) {
-    return { matches: [], error: e instanceof Error ? e.message : "无效的正则表达式" };
+    return { matches: [], error: e instanceof Error ? e.message : t.tools.regexTester.invalidRegex };
   }
 }
 
@@ -58,17 +60,19 @@ function escapeHtml(str: string): string {
     .replace(/ /g, "&nbsp;");
 }
 
-const FLAG_OPTIONS: { flag: RegexFlag; label: string; desc: string }[] = [
-  { flag: "g", label: "g", desc: "全局匹配" },
-  { flag: "i", label: "i", desc: "忽略大小写" },
-  { flag: "m", label: "m", desc: "多行模式" },
-  { flag: "s", label: "s", desc: ". 匹配换行符" },
-];
-
 export function RegexTesterTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [pattern, setPattern] = useState("");
   const [flags, setFlags] = useState<Set<RegexFlag>>(new Set(["g"]));
   const [testStr, setTestStr] = useState("");
+
+  const FLAG_OPTIONS: { flag: RegexFlag; label: string; desc: string }[] = [
+    { flag: "g", label: "g", desc: t.tools.regexTester.globalFlag },
+    { flag: "i", label: "i", desc: t.tools.regexTester.ignoreCaseFlag },
+    { flag: "m", label: "m", desc: t.tools.regexTester.multilineFlag },
+    { flag: "s", label: "s", desc: ". matches newline" },
+  ];
 
   const toggleFlag = (f: RegexFlag) => {
     setFlags((prev) => {
@@ -93,7 +97,7 @@ export function RegexTesterTool() {
     <div className="flex flex-col gap-4 p-6 h-full overflow-auto">
       {/* Pattern input */}
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">正则表达式</h3>
+        <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">{t.tools.regexTester.pattern}</h3>
         <div className="flex items-center gap-0">
           <span className="px-3 py-2 bg-[#3c3c3c] text-[#858585] text-sm rounded-l border border-[#3e3e42] border-r-0 select-none">
             /
@@ -102,7 +106,7 @@ export function RegexTesterTool() {
             type="text"
             value={pattern}
             onChange={(e) => setPattern(e.target.value)}
-            placeholder="输入正则表达式..."
+            placeholder={t.tools.regexTester.testPlaceholder}
             className={`flex-1 bg-[#1e1e1e] border-y border-[#3e3e42] px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4] ${
               error ? "border-red-500" : ""
             }`}
@@ -140,19 +144,19 @@ export function RegexTesterTool() {
       {/* Test string */}
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium text-[#d4d4d4]">测试文本</h3>
+          <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.regexTester.testInput}</h3>
           <span className="text-xs text-[#858585]">
             {matches.length > 0 ? (
-              <span className="text-[#4ec9b0]">✓ {matches.length} 个匹配</span>
+              <span className="text-[#4ec9b0]">✓ {matches.length} {t.tools.regexTester.matched}</span>
             ) : pattern && !error ? (
-              <span className="text-yellow-400">无匹配</span>
+              <span className="text-yellow-400">{t.tools.regexTester.noMatch}</span>
             ) : null}
           </span>
         </div>
         <textarea
           value={testStr}
           onChange={(e) => setTestStr(e.target.value)}
-          placeholder="输入测试文本..."
+          placeholder={t.tools.regexTester.testPlaceholder}
           className="w-full h-36 bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4] resize-none"
         />
       </div>
@@ -160,7 +164,7 @@ export function RegexTesterTool() {
       {/* Highlighted result */}
       {testStr && !error && (
         <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-          <h3 className="text-sm font-medium text-[#d4d4d4] mb-2">匹配高亮</h3>
+          <h3 className="text-sm font-medium text-[#d4d4d4] mb-2">{t.tools.regexTester.highlightTitle}</h3>
           <div
             className="bg-[#1e1e1e] rounded px-3 py-2 text-sm font-mono leading-relaxed text-[#d4d4d4] min-h-[48px]"
             // biome-ignore lint/security/noDangerouslySetInnerHtml: controlled by internal escapeHtml
@@ -172,7 +176,7 @@ export function RegexTesterTool() {
       {/* Match details */}
       {matches.length > 0 && (
         <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-          <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">匹配详情</h3>
+          <h3 className="text-sm font-medium text-[#d4d4d4] mb-3">{t.tools.regexTester.detailsTitle}</h3>
           <div className="flex flex-col gap-2">
             {matches.map((m, i) => (
               <div
@@ -183,13 +187,13 @@ export function RegexTesterTool() {
                   <span className="text-[#858585] shrink-0">#{i + 1}</span>
                   <div className="flex-1">
                     <span className="text-[#9cdcfe]">"{m.match}"</span>
-                    <span className="text-[#858585] ml-3">位置: {m.index}</span>
-                    <span className="text-[#858585] ml-3">长度: {m.match.length}</span>
+                    <span className="text-[#858585] ml-3">{t.tools.regexTester.position}: {m.index}</span>
+                    <span className="text-[#858585] ml-3">{t.tools.regexTester.length}: {m.match.length}</span>
                   </div>
                 </div>
                 {m.groupList.length > 0 && (
                   <div className="mt-1.5 pl-8 text-[#858585]">
-                    分组:{" "}
+                    {t.tools.regexTester.groups}:{" "}
                     {m.groupList.map((g, j) => (
                       // biome-ignore lint/suspicious/noArrayIndexKey: group indices are positionally meaningful
                       <span key={j} className="mr-2">

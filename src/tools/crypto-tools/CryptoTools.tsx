@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
 // ─── MD5 (pure JS, no dependency needed) ────────────────────────────────────
 function md5(str: string): string {
@@ -203,6 +205,8 @@ type HashAlgo = "MD5" | "SHA-1" | "SHA-256" | "SHA-512";
 const HASH_ALGOS: HashAlgo[] = ["MD5", "SHA-1", "SHA-256", "SHA-512"];
 
 function HashTab() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [input, setInput] = useState("");
   const [results, setResults] = useState<Record<HashAlgo, string>>({} as Record<HashAlgo, string>);
   const [loading, setLoading] = useState(false);
@@ -230,15 +234,15 @@ function HashTab() {
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-        <h3 className="text-sm font-medium text-[#d4d4d4] mb-2">输入文本</h3>
+        <h3 className="text-sm font-medium text-[#d4d4d4] mb-2">{t.tools.cryptoTools.inputText}</h3>
         <textarea
           value={input}
           onChange={(e) => handleInput(e.target.value)}
-          placeholder="输入要计算哈希值的文本..."
+          placeholder={t.tools.cryptoTools.inputHashPlaceholder}
           className="w-full h-24 bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4] resize-none"
         />
       </div>
-      {loading && <div className="text-xs text-[#858585]">计算中...</div>}
+      {loading && <div className="text-xs text-[#858585]">{t.tools.cryptoTools.computing}</div>}
       {HASH_ALGOS.map((algo) => (
         <div key={algo} className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
           <div className="flex items-center justify-between mb-2">
@@ -259,6 +263,8 @@ type HmacAlgo = "SHA-1" | "SHA-256" | "SHA-512";
 const HMAC_ALGOS: HmacAlgo[] = ["SHA-1", "SHA-256", "SHA-512"];
 
 function HmacTab() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [message, setMessage] = useState("");
   const [secret, setSecret] = useState("");
   const [algo, setAlgo] = useState<HmacAlgo>("SHA-256");
@@ -301,7 +307,7 @@ function HmacTab() {
         <div className="flex flex-col gap-3">
           <div>
             <label htmlFor="hmac-secret" className="text-xs text-[#858585] mb-1 block">
-              密钥 (Secret)
+              {t.tools.cryptoTools.secret}
             </label>
             <input
               id="hmac-secret"
@@ -311,13 +317,13 @@ function HmacTab() {
                 setSecret(e.target.value);
                 compute(message, e.target.value, algo);
               }}
-              placeholder="输入密钥..."
+              placeholder={t.tools.cryptoTools.secretPlaceholder}
               className="w-full bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4]"
             />
           </div>
           <div>
             <label htmlFor="hmac-message" className="text-xs text-[#858585] mb-1 block">
-              消息 (Message)
+              {t.tools.cryptoTools.message}
             </label>
             <textarea
               id="hmac-message"
@@ -326,7 +332,7 @@ function HmacTab() {
                 setMessage(e.target.value);
                 compute(e.target.value, secret, algo);
               }}
-              placeholder="输入消息..."
+              placeholder={t.tools.cryptoTools.messagePlaceholder}
               className="w-full h-24 bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4] resize-none"
             />
           </div>
@@ -334,11 +340,11 @@ function HmacTab() {
       </div>
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-[#d4d4d4]">HMAC-{algo} 结果</span>
+          <span className="text-sm font-medium text-[#d4d4d4]">HMAC-{algo} {t.tools.cryptoTools.hmacResult}</span>
           {result && <CopyButton text={result} />}
         </div>
         <div className="font-mono text-sm text-[#9cdcfe] bg-[#1e1e1e] rounded px-3 py-2 break-all min-h-[36px]">
-          {loading ? "计算中..." : result || <span className="text-[#858585]">—</span>}
+          {loading ? t.tools.cryptoTools.computing : result || <span className="text-[#858585]">—</span>}
         </div>
       </div>
     </div>
@@ -347,6 +353,8 @@ function HmacTab() {
 
 // ─── AES Tab ─────────────────────────────────────────────────────────────────
 function AesTab() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
   const [input, setInput] = useState("");
   const [key, setKey] = useState("");
   const [output, setOutput] = useState("");
@@ -366,7 +374,7 @@ function AesTab() {
         setOutput(await aesDecrypt(inp, k));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "处理失败");
+      setError(e instanceof Error ? e.message : t.tools.cryptoTools.processFailed);
       setOutput("");
     }
   };
@@ -375,7 +383,7 @@ function AesTab() {
     <div className="flex flex-col gap-4">
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
         <p className="text-xs text-[#858585] mb-3">
-          使用 AES-GCM (256-bit) 加密，密钥截断或填充至 32 字节，输出为 Base64 (包含 IV)
+          {t.tools.cryptoTools.aesNote}
         </p>
         <div className="flex gap-2 mb-4">
           {(["encrypt", "decrypt"] as const).map((m) => (
@@ -392,14 +400,14 @@ function AesTab() {
                   : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
               }`}
             >
-              {m === "encrypt" ? "加密" : "解密"}
+              {m === "encrypt" ? t.tools.cryptoTools.encrypt : t.tools.cryptoTools.decrypt}
             </button>
           ))}
         </div>
         <div className="flex flex-col gap-3">
           <div>
             <label htmlFor="aes-key" className="text-xs text-[#858585] mb-1 block">
-              密钥 (Key)
+              {t.tools.cryptoTools.aesKey}
             </label>
             <input
               id="aes-key"
@@ -409,13 +417,13 @@ function AesTab() {
                 setKey(e.target.value);
                 process(input, e.target.value, mode);
               }}
-              placeholder="输入加密密钥..."
+              placeholder={t.tools.cryptoTools.aesKeyPlaceholder}
               className="w-full bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4]"
             />
           </div>
           <div>
             <label htmlFor="aes-input" className="text-xs text-[#858585] mb-1 block">
-              {mode === "encrypt" ? "明文" : "密文 (Base64)"}
+              {mode === "encrypt" ? t.tools.cryptoTools.plaintext : t.tools.cryptoTools.ciphertext}
             </label>
             <textarea
               id="aes-input"
@@ -424,7 +432,7 @@ function AesTab() {
                 setInput(e.target.value);
                 process(e.target.value, key, mode);
               }}
-              placeholder={mode === "encrypt" ? "输入要加密的文本..." : "输入 Base64 密文..."}
+              placeholder={mode === "encrypt" ? t.tools.cryptoTools.encryptPlaceholder : t.tools.cryptoTools.decryptPlaceholder}
               className="w-full h-24 bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4] resize-none"
             />
           </div>
@@ -433,7 +441,7 @@ function AesTab() {
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-[#d4d4d4]">
-            {mode === "encrypt" ? "密文 (Base64)" : "明文"}
+            {mode === "encrypt" ? t.tools.cryptoTools.ciphertext : t.tools.cryptoTools.plaintext}
           </span>
           {output && <CopyButton text={output} />}
         </div>
@@ -451,32 +459,50 @@ function AesTab() {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 type Tab = "hash" | "hmac" | "aes";
-const TABS: { id: Tab; label: string }[] = [
-  { id: "hash", label: "哈希" },
-  { id: "hmac", label: "HMAC" },
-  { id: "aes", label: "AES 加解密" },
-];
 
 export function CryptoTools() {
-  const [tab, setTab] = useState<Tab>("hash");
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
 
   return (
     <div className="flex flex-col h-full overflow-auto p-6 gap-4">
       <div className="flex gap-2">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`px-4 py-1.5 text-sm rounded transition-colors ${
-              tab === t.id
-                ? "bg-[#0078d4] text-white"
-                : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+        <button
+          key="hash"
+          type="button"
+          onClick={() => setTab("hash")}
+          className={`px-4 py-1.5 text-sm rounded transition-colors ${
+            tab === "hash"
+              ? "bg-[#0078d4] text-white"
+              : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
+          }`}
+        >
+          {t.tools.cryptoTools.hashTab}
+        </button>
+        <button
+          key="hmac"
+          type="button"
+          onClick={() => setTab("hmac")}
+          className={`px-4 py-1.5 text-sm rounded transition-colors ${
+            tab === "hmac"
+              ? "bg-[#0078d4] text-white"
+              : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
+          }`}
+        >
+          {t.tools.cryptoTools.hmacTab}
+        </button>
+        <button
+          key="aes"
+          type="button"
+          onClick={() => setTab("aes")}
+          className={`px-4 py-1.5 text-sm rounded transition-colors ${
+            tab === "aes"
+              ? "bg-[#0078d4] text-white"
+              : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
+          }`}
+        >
+          {t.tools.cryptoTools.aesTab}
+        </button>
       </div>
       {tab === "hash" && <HashTab />}
       {tab === "hmac" && <HmacTab />}
