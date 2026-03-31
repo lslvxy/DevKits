@@ -39,7 +39,7 @@ export function LogParser() {
   const [input, setInput] = useState("");
   const [result, setResult] = useState<ParseResult | null>(null);
   const [mode, setMode] = useState<Mode>("auto");
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const parse = useCallback((text: string, m: Mode) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
