@@ -3,8 +3,8 @@ import type { ToolDefinition } from "../../core/types.ts";
 
 export const tool: ToolDefinition = {
   id: "random-string",
-  name: "随机字符串",
-  description: "生成随机字符串",
+  name: { zh: "随机字符串", en: "Random String" },
+  description: { zh: "生成随机字符串", en: "Generate random strings" },
   category: "generate",
   icon: "🎲",
   keywords: ["random", "string", "generate", "随机", "字符串", "password"],
