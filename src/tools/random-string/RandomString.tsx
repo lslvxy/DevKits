@@ -8,12 +8,17 @@ const CHARSETS = {
   symbols: "!@#$%^&*()_+-=[]{}|;:,.<>?",
 };
 
-function secureRandom(charset: string, length: number, count: number): string[] {
+type ResultItem = { id: string; value: string };
+
+function secureRandom(charset: string, length: number, count: number): ResultItem[] {
   const buf = new Uint32Array(length * count);
   crypto.getRandomValues(buf);
-  return Array.from({ length: count }, (_, i) =>
-    Array.from({ length }, (__, j) => charset[buf[i * length + j] % charset.length]).join("")
-  );
+  return Array.from({ length: count }, (_, i) => ({
+    id: String(i),
+    value: Array.from({ length }, (__, j) => charset[buf[i * length + j] % charset.length]).join(
+      ""
+    ),
+  }));
 }
 
 export function RandomStringTool() {
@@ -23,7 +28,7 @@ export function RandomStringTool() {
   const [useLower, setUseLower] = useState(true);
   const [useDigits, setUseDigits] = useState(true);
   const [useSymbols, setUseSymbols] = useState(false);
-  const [results, setResults] = useState<string[]>([]);
+  const [results, setResults] = useState<ResultItem[]>([]);
   const [error, setError] = useState("");
 
   const generate = () => {
@@ -112,16 +117,16 @@ export function RandomStringTool() {
         <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-medium text-[#d4d4d4]">结果</h3>
-            <CopyButton text={results.join("\n")} />
+            <CopyButton text={results.map((r) => r.value).join("\n")} />
           </div>
           <div className="flex flex-col gap-1.5">
-            {results.map((str) => (
+            {results.map((item) => (
               <div
-                key={str}
+                key={item.id}
                 className="flex items-center justify-between gap-2 rounded bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#9cdcfe]"
               >
-                <span className="break-all">{str}</span>
-                <CopyButton text={str} />
+                <span className="break-all">{item.value}</span>
+                <CopyButton text={item.value} />
               </div>
             ))}
           </div>
