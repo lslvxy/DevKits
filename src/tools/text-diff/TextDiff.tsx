@@ -2,6 +2,7 @@ import { createTwoFilesPatch } from "diff";
 import { useCallback, useEffect, useState } from "react";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 type DiffLine = {
   id: string;
@@ -30,8 +31,8 @@ function hasChanges(lines: DiffLine[]) {
 export function TextDiffTool() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [left, setLeft] = useState("");
-  const [right, setRight] = useState("");
+  const [left, setLeft] = useToolDraft("text-diff:left");
+  const [right, setRight] = useToolDraft("text-diff:right");
   const [lines, setLines] = useState<DiffLine[]>([]);
 
   const compute = useCallback(() => {

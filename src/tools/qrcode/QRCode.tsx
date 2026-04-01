@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 type Tab = "generate" | "decode";
 
@@ -13,7 +14,7 @@ export function QRCodeTool() {
   const [tab, setTab] = useState<Tab>("generate");
 
   // Generate
-  const [text, setText] = useState("");
+  const [text, setText] = useToolDraft("qrcode:text");
   const [size, setSize] = useState(256);
   const [qrUrl, setQrUrl] = useState("");
   const [genError, setGenError] = useState("");

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 type Mode = "ascii2hex" | "hex2ascii";
 
@@ -9,7 +10,7 @@ export function HexAsciiTool() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
   const [mode, setMode] = useState<Mode>("ascii2hex");
-  const [input, setInput] = useState("");
+  const [input, setInput] = useToolDraft("hex-ascii:input");
   const [uppercase, setUppercase] = useState(false);
   const [spaceSep, setSpaceSep] = useState(true);
 

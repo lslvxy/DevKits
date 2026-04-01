@@ -1,17 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getT } from "../../i18n/index.ts";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 type Mode = "encode" | "decode";
 
 export function Base64Tool() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useToolDraft("base64:input");
   const [output, setOutput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("encode");
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
+  useEffect(() => { if (input) process(input, mode); }, []);
 
   const process = (text: string, m: Mode) => {
     if (!text) {

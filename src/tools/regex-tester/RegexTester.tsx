@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 type RegexFlag = "g" | "i" | "m" | "s";
 
@@ -63,9 +64,9 @@ function escapeHtml(str: string): string {
 export function RegexTesterTool() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [pattern, setPattern] = useState("");
+  const [pattern, setPattern] = useToolDraft("regex-tester:pattern");
   const [flags, setFlags] = useState<Set<RegexFlag>>(new Set(["g"]));
-  const [testStr, setTestStr] = useState("");
+  const [testStr, setTestStr] = useToolDraft("regex-tester:testStr");
 
   const FLAG_OPTIONS: { flag: RegexFlag; label: string; desc: string }[] = [
     { flag: "g", label: "g", desc: t.tools.regexTester.globalFlag },

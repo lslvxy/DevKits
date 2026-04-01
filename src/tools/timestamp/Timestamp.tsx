@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 import { CopyButton } from "../../components/CopyButton.tsx";
 
 function formatWithPattern(date: Date, pattern: string): string {
@@ -27,16 +28,22 @@ function formatWithPattern(date: Date, pattern: string): string {
 export function TimestampTool() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [tsInput, setTsInput] = useState("");
+  const [tsInput, setTsInput] = useToolDraft("timestamp:tsInput");
   const [sourceMode, setSourceMode] = useState<"current" | "specified">("current");
-  const [specifiedInput, setSpecifiedInput] = useState("");
-  const [formatPattern, setFormatPattern] = useState("YYYY-MM-DD HH:mm:ss");
-  const [dateInput, setDateInput] = useState("");
+  const [specifiedInput, setSpecifiedInput] = useToolDraft("timestamp:specifiedInput");
+  const [formatPattern, setFormatPattern] = useToolDraft("timestamp:formatPattern", "YYYY-MM-DD HH:mm:ss");
+  const [dateInput, setDateInput] = useToolDraft("timestamp:dateInput");
   const [tsResult, setTsResult] = useState<string | null>(null);
   const [tsFormattedResult, setTsFormattedResult] = useState<string | null>(null);
   const [dateResult, setDateResult] = useState<string | null>(null);
   const [tsError, setTsError] = useState<string | null>(null);
   const [dateError, setDateError] = useState<string | null>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
+  useEffect(() => {
+    if (tsInput) convertTimestamp(tsInput);
+    if (dateInput) convertDate(dateInput);
+  }, []);
 
   const convertTimestamp = (v: string) => {
     setTsInput(v);

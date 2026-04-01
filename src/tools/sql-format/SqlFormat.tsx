@@ -4,6 +4,7 @@ import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 type Dialect = "sql" | "mysql" | "postgresql" | "transactsql";
 type PositionDirection = "fromStart" | "fromEnd";
@@ -271,7 +272,7 @@ function toInline(sql: string): string {
 export function SqlFormatTool() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useToolDraft("sql-format:input");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [dialect, setDialect] = useState<Dialect>("sql");

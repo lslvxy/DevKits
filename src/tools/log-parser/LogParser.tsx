@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CodeEditor } from "../../components/CodeEditor.tsx";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
@@ -11,6 +11,7 @@ import { KVParser } from "./parsers/kv.ts";
 import { LogFrameworkParser } from "./parsers/log-framework.ts";
 import { ToStringParser } from "./parsers/to-string.ts";
 import type { ParseResult } from "./parsers/types.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 type Mode = "auto" | "logback";
 
@@ -33,11 +34,14 @@ const MODE_LABELS: Record<Mode, string> = {
 export function LogParser() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useToolDraft("log-parser:input");
   const [result, setResult] = useState<ParseResult | null>(null);
   const [mode, setMode] = useState<Mode>("auto");
   const [showClass, setShowClass] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
+  useEffect(() => { if (input.trim()) setResult(chains[mode](input)); }, []);
 
   function stripClass(val: unknown): unknown {
     if (Array.isArray(val)) return val.map(stripClass);

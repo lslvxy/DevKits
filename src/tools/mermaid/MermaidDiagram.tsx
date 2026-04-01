@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { DualPanel } from "../../components/DualPanel.tsx";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 const DEFAULT_CODE = `graph TD
   A[Start] --> B{Is it?}
@@ -12,7 +13,7 @@ const DEFAULT_CODE = `graph TD
 export function MermaidDiagramTool() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [code, setCode] = useState(DEFAULT_CODE);
+  const [code, setCode] = useToolDraft("mermaid:code", DEFAULT_CODE);
   const [error, setError] = useState("");
   const previewRef = useRef<HTMLDivElement>(null);
   const renderIdRef = useRef(0);

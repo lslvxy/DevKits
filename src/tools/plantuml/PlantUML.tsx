@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { DualPanel } from "../../components/DualPanel.tsx";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 const DEFAULT_CODE = `@startuml
 Alice -> Bob: Hello
@@ -17,7 +18,7 @@ function toHex(text: string): string {
 export function PlantUMLTool() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [code, setCode] = useState(DEFAULT_CODE);
+  const [code, setCode] = useToolDraft("plantuml:code", DEFAULT_CODE);
   const [imgUrl, setImgUrl] = useState("");
 
   useEffect(() => {

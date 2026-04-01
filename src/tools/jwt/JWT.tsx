@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 import { CopyButton } from "../../components/CopyButton.tsx";
 
 function base64urlDecode(str: string): string {
@@ -32,9 +33,12 @@ type JwtData = {
 export function JWTTool() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useToolDraft("jwt:input");
   const [data, setData] = useState<JwtData | null>(null);
   const [error, setError] = useState("");
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
+  useEffect(() => { if (input) decode(input); }, []);
 
   const decode = (token: string) => {
     setInput(token);

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 import { CodeEditor } from "../../components/CodeEditor.tsx";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
@@ -28,11 +29,14 @@ function unescapeJsonString(str: string): string {
 export function JsonFormatter() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useToolDraft("json-formatter:input");
   const [output, setOutput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("format");
   const [indent, setIndent] = useState(2);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
+  useEffect(() => { if (input) process(input, mode, indent); }, []);
 
   const process = (text: string, m: Mode, ind: number) => {
     if (!text.trim()) {

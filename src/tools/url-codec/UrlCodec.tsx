@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 type Mode = "encodeComponent" | "decodeComponent" | "encodeURI" | "decodeURI";
 
@@ -33,7 +34,7 @@ export function UrlCodecTool() {
       { id: "encodeURI", label: t.tools.urlCodec.encodeURI, desc: "encodeURI" },
       { id: "decodeURI", label: t.tools.urlCodec.decodeURI, desc: "decodeURI" },
     ];
-  const [input, setInput] = useState("");
+  const [input, setInput] = useToolDraft("url-codec:input");
   const [mode, setMode] = useState<Mode>("encodeComponent");
 
   const { output, error } = processURL(input, mode);

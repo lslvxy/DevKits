@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
 
 // ─── MD5 (pure JS, no dependency needed) ────────────────────────────────────
 function md5(str: string): string {
@@ -207,9 +208,12 @@ const HASH_ALGOS: HashAlgo[] = ["MD5", "SHA-1", "SHA-256", "SHA-512"];
 function HashTab() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useToolDraft("crypto:hash-input");
   const [results, setResults] = useState<Record<HashAlgo, string>>({} as Record<HashAlgo, string>);
   const [loading, setLoading] = useState(false);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
+  useEffect(() => { if (input) computeAll(input); }, []);
 
   const computeAll = async (text: string) => {
     if (!text) {
@@ -265,11 +269,14 @@ const HMAC_ALGOS: HmacAlgo[] = ["SHA-1", "SHA-256", "SHA-512"];
 function HmacTab() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [message, setMessage] = useState("");
-  const [secret, setSecret] = useState("");
+  const [message, setMessage] = useToolDraft("crypto:hmac-message");
+  const [secret, setSecret] = useToolDraft("crypto:hmac-secret");
   const [algo, setAlgo] = useState<HmacAlgo>("SHA-256");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
+  useEffect(() => { if (message && secret) compute(message, secret, algo); }, []);
 
   const compute = async (msg: string, sec: string, a: HmacAlgo) => {
     if (!msg || !sec) {
@@ -355,7 +362,7 @@ function HmacTab() {
 function AesTab() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useToolDraft("crypto:aes-input");
   const [key, setKey] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState<string | null>(null);
