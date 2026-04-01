@@ -64,3 +64,21 @@ registerTool(cryptoToolsTool);
 registerTool(rsaKeygenTool);
 registerTool(regexTesterTool);
 registerTool(cronTool);
+
+// Auto-discover private tools from src/tools-private/ (gitignored).
+// To wire in your private tools repo:
+//   git clone git@github.com:your-org/private-tools.git src/tools-private
+//   # or: git submodule add git@github.com:your-org/private-tools.git src/tools-private
+//
+// Each subdirectory must export a named `tool: ToolDefinition` from its index.ts,
+// following the same contract as tools in src/tools/.
+const _privateModules = import.meta.glob<{ tool: ToolDefinition }>(
+  "../tools-private/*/index.ts",
+  { eager: true },
+);
+for (const mod of Object.values(_privateModules)) {
+  if (mod?.tool) {
+    registerTool(mod.tool);
+  }
+}
+registerTool(cronTool);

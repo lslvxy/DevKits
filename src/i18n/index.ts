@@ -546,6 +546,8 @@ export const translations: Record<Locale, Translations> = {
         decodeResult: "解析结果",
         decodeFailed: "无法识别二维码",
         readFileFailed: "读取文件失败",
+        chooseImage: "选择图片",
+        imagePreview: "图片预览",
       },
       randomString: {
         genOptions: "生成选项",
@@ -621,6 +623,8 @@ export const translations: Record<Locale, Translations> = {
         packageName: "包名:",
         useLombok: "使用 Lombok",
         generateOptions: "生成选项",
+        parseError: "SQL 解析失败",
+        noCreateTable: "未找到 CREATE TABLE 语句",
       },
       textDiff: {
         leftPanel: "原始文本",
@@ -850,6 +854,7 @@ export const translations: Record<Locale, Translations> = {
         ascii2hex: "ASCII → Hex",
         hex2ascii: "Hex → ASCII",
         input: "Input",
+        output: "Output",
         asciiPlaceholder: "Enter ASCII text...",
         hexPlaceholder: "Enter Hex string (e.g. 48 65 6c 6c 6f)...",
         uppercase: "Uppercase",
@@ -969,6 +974,8 @@ export const translations: Record<Locale, Translations> = {
         packageName: "Package Name:",
         useLombok: "Use Lombok",
         generateOptions: "Generation Options",
+        parseError: "SQL parse failed",
+        noCreateTable: "No CREATE TABLE statement found",
       },
       textDiff: {
         leftPanel: "Original Text",

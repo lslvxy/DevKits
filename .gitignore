@@ -3,3 +3,7 @@ dist
 src-tauri/target
 .DS_Store
 *.local
+
+# Private tools — place your private tools repo here (git clone / submodule / symlink)
+# Structure mirrors src/tools/: each subdirectory is one tool with index.ts + Component.tsx
+src/tools-private/
