@@ -1,363 +1,443 @@
-# DevKits — 插件化开发者工具集
+# DevKits
 
-## 概述
+> 基于 **Tauri 2 + React 18 + TypeScript** 的桌面端开发者工具集。
+> A desktop developer toolbox built on **Tauri 2 + React 18 + TypeScript**.
 
-基于 Tauri 2 + React + TypeScript 构建的桌面端开发者工具集（类似 DevUtils / DevToys），首个核心工具为 Java 日志解析器，后续持续扩展更多研发小工具。
+![Tauri](https://img.shields.io/badge/Tauri-2.x-blue)
+![React](https://img.shields.io/badge/React-18.x-61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6)
 
-## 基础要求
+---
 
-| 项 | 规范 | 备注 |
-|---|---|---|
-| OS | macOS (首要) | 后续考虑 Windows/Linux |
-| Node 版本管理 | `n` | 禁止使用 nvm |
-| 包管理器 | `pnpm` | 禁止使用 npm/yarn |
-| Node 版本 | 最新 LTS | |
-| 桌面框架 | Tauri 2 | Rust 只写 main.rs 壳，业务逻辑全在 TS |
-| 前端框架 | React + TypeScript | 严格模式, 函数组件 + Hooks only |
-| 构建工具 | Vite | |
-| CSS | Tailwind CSS 4 | |
-| 代码规范 | Biome | lint + format 二合一，替代 ESLint + Prettier |
-| 测试 | Vitest | 解析器必须有单元测试 |
-| 状态管理 | Zustand | |
-| 代码编辑器 | @monaco-editor/react | |
-| Rust 工具链 | rustup stable | |
+## 目录 / Contents
 
-## 代码规范与约定
+- [功能概览](#功能概览--built-in-tools)
+- [使用手册](#使用手册--user-manual)
+- [开发环境搭建](#开发环境搭建--dev-setup)
+- [私有工具 / 三方集成](#私有工具--三方集成--private-tools--third-party-integration)
+- [架构说明](#架构说明--architecture)
+- [开发规范](#开发规范--development-guide)
 
-- 文件命名: `kebab-case.ts` / `PascalCase.tsx` (组件)
-- 导出: 每个工具目录的 `index.ts` 为唯一出口，使用 named export，禁止 default export
-- 组件: 函数组件 + Hooks，禁止 class 组件
-- 类型: 业务类型用 `type`，需要 implements/extends 时用 `interface`
-- 样式: Tailwind utility class 优先，复杂动画可用 CSS Modules
-- 解析器: 纯函数，零副作用，零 DOM 依赖，可独立于 React 运行和测试
-- 错误处理: 解析器永远不 throw，返回 FallbackResult 兜底
-- 国际化: 界面文案暂用中文，后续可切换
+---
 
-## 项目目录结构
+## 功能概览 / Built-in Tools
+
+共 22 个内置工具，按分类组织：
+
+### 📝 文本处理 (text)
+
+| 图标 | 工具 | 描述 |
+|------|------|------|
+| 📄 | **JSON 格式化** / JSON Formatter | 格式化、压缩、校验、转义 JSON 数据 |
+| 📊 | **文本对比** / Text Diff | 对比两段文本的差异（行级 diff） |
+| 🔍 | **正则表达式** / Regex Tester | 正则表达式测试与匹配高亮 |
+| 🗄️ | **SQL 格式化** / SQL Formatter | 格式化 SQL 语句 |
+| 📋 | **日志解析器** / Log Parser | 解析 Java 日志，支持 Logback/Log4j、toString、KV 格式 |
+
+### 🔄 编解码 (codec)
+
+| 图标 | 工具 | 描述 |
+|------|------|------|
+| 🔄 | **Base64 编解码** / Base64 Codec | Base64 编码与解码 |
+| 🖼️ | **Base64 图片** / Base64 Image | 图片与 Base64 字符串互转 |
+| 🔑 | **JWT 解析** / JWT Decoder | 解析 JWT Token 的 Header 和 Payload |
+| 🔢 | **Hex/ASCII 转换** / Hex/ASCII Converter | Hex 与 ASCII 文本互转 |
+| 🔗 | **URL 编解码** / URL Codec | URL 编码（percent-encoding）与解码 |
+
+### 🔁 格式转换 (convert)
+
+| 图标 | 工具 | 描述 |
+|------|------|------|
+| 🕐 | **时间戳转换** / Timestamp Converter | 时间戳与可读日期互转（支持毫秒） |
+| 🔀 | **YAML/JSON 转换** / YAML/JSON Converter | YAML 与 JSON 格式互转 |
+| 📋 | **CSV/JSON 转换** / CSV/JSON Converter | CSV 与 JSON 格式互转 |
+| ☕ | **SQL → POJO** | CREATE TABLE SQL 转换为 Java POJO 类 |
+
+### ✨ 生成 (generate)
+
+| 图标 | 工具 | 描述 |
+|------|------|------|
+| 🔧 | **UUID 生成器** / UUID Generator | 生成 UUID v4 / v7 / NanoID |
+| 🎲 | **随机字符串** / Random String | 生成可配置的随机字符串 |
+| 📈 | **Mermaid 流程图** / Mermaid Diagram | 使用 Mermaid 语法绘制流程图 |
+| 🎯 | **PlantUML 流程图** / PlantUML Diagram | 使用 PlantUML 语法绘制 UML 图 |
+| 📱 | **QR Code** | 生成和扫描解析二维码 |
+
+### 🔐 加密 (crypto)
+
+| 图标 | 工具 | 描述 |
+|------|------|------|
+| 🔐 | **加解密工具** / Crypto Tools | Hash（MD5/SHA）、AES 加解密、HMAC |
+| 🗝️ | **RSA 密钥生成** / RSA Key Generator | 生成 RSA 公私钥对（PEM 格式） |
+
+### 🔩 其他 (other)
+
+| 图标 | 工具 | 描述 |
+|------|------|------|
+| ⏰ | **Cron 表达式** / Cron Expression | Cron 表达式可视化创建与解析 |
+
+---
+
+## 使用手册 / User Manual
+
+### 主界面布局
 
 ```
-devkits/
-├── src-tauri/                       # Tauri Rust 后端 (最小化)
-│   ├── src/
-│   │   └── main.rs                  # 仅 Tauri 启动代码，不写业务逻辑
-│   ├── Cargo.toml
-│   └── tauri.conf.json
-│
-├── src/                             # React 前端
-│   ├── main.tsx                     # React 入口
-│   ├── App.tsx                      # 根组件: 布局 + 路由
-│   ├── index.css                    # Tailwind 入口
-│   │
-│   ├── core/                        # 框架核心 (与具体工具无关)
-│   │   ├── types.ts                 # ToolDefinition 等核心类型
-│   │   ├── registry.ts              # 工具注册表
-│   │   ├── store.ts                 # Zustand 全局状态 (当前工具、搜索词等)
-│   │   └── layout/
-│   │       ├── Sidebar.tsx          # 左侧导航: 分类 + 搜索 + 工具列表
-│   │       ├── ToolPage.tsx         # 右侧工具页容器
-│   │       └── WelcomePage.tsx      # 首页 / 无工具选中时显示
-│   │
-│   ├── components/                  # 共享 UI 组件
-│   │   ├── DualPanel.tsx            # 左右分栏 (可拖拽调整宽度)
-│   │   ├── CodeEditor.tsx           # Monaco 编辑器封装
-│   │   ├── JsonViewer.tsx           # JSON 树形展示 (可折叠/搜索/复制)
-│   │   └── CopyButton.tsx          # 一键复制按钮
-│   │
-│   └── tools/                       # 工具集 (每个工具一个自包含目录)
-│       ├── log-parser/              # 日志解析器
-│       │   ├── index.ts             # ToolDefinition 导出
-│       │   ├── LogParser.tsx        # 工具 UI
-│       │   └── parsers/             # 解析引擎 (纯 TS, 零 UI 依赖)
-│       │       ├── types.ts         # LogParser 接口, ParseResult 类型
-│       │       ├── chain.ts         # 解析器链调度
-│       │       ├── json-detect.ts   # JSON 探测解析器
-│       │       ├── log-framework.ts # 日志框架行解析器
-│       │       ├── to-string.ts     # toString 递归解析器 (核心)
-│       │       ├── kv.ts            # KV 解析器
-│       │       └── fallback.ts      # 兜底解析器
-│       │
-│       ├── json-formatter/          # JSON 格式化 (Phase 3)
-│       │   ├── index.ts
-│       │   └── JsonFormatter.tsx
-│       │
-│       └── ...                      # 后续工具按相同结构添加
-│
-├── tests/                           # 测试
-│   └── fixtures/
-│       └── sample-log.txt           # 真实日志样本 (见下方测试数据)
-│
-├── biome.json
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── tailwind.config.ts
+┌─────────────────┬──────────────────────────────────┐
+│   侧边栏          │   工具区域                         │
+│   Sidebar        │   Tool Panel                      │
+│                  │                                   │
+│  🔍 搜索框        │   <当前选中工具的 UI>               │
+│  ─────────────  │                                   │
+│  📝 文本处理      │                                   │
+│    JSON 格式化    │                                   │
+│    文本对比       │                                   │
+│    ...           │                                   │
+│  🔄 编解码        │                                   │
+│    ...           │                                   │
+│  ─────────────  │                                   │
+│  🌐 EN / 中      │                                   │
+└─────────────────┴──────────────────────────────────┘
 ```
 
-## 核心类型定义
+### 工具搜索
+
+侧边栏顶部有搜索框，支持**中英文混合搜索**，同时匹配：
+- 工具名称（中文 + 英文）
+- 工具描述（中文 + 英文）
+- 关键词（keywords）
+
+例如输入 `base64`、`编码`、`格式化`、`diff` 均可快速定位到对应工具。
+
+### 语言切换
+
+侧边栏底部有语言切换按钮（`🌐 EN` / `中`），点击即可在**中文**和**英文**之间切换。语言偏好在 Zustand store 中持久化（`devkits-store`）。
+
+### 收藏工具
+
+点击工具名称旁的⭐图标可将工具加入收藏。收藏的工具会出现在侧边栏顶部的**收藏分类**下，方便快速访问。收藏记录持久化存储（`devkits-store`）。
+
+### 侧边栏自动折叠
+
+在设置中可开启**侧边栏自动折叠**（`sidebarAutoCollapse`）：选中工具后侧边栏自动收起，最大化工具工作区。
+
+### 输入内容持久化
+
+所有工具的输入框内容在**页面切换**和**应用重启**后均自动保留，无需手动复制。  
+技术实现：`useToolDraft` hook 将输入写入 `localStorage`，键格式为 `devkits-draft:<工具id>:<字段名>`。
+
+---
+
+## 开发环境搭建 / Dev Setup
+
+### 前置要求
+
+- [Node.js](https://nodejs.org/) ≥ 20（推荐用 `n` 管理版本，**禁止 nvm**）
+- [pnpm](https://pnpm.io/) ≥ 9（**禁止 npm/yarn**）
+- [Rust](https://rustup.rs/) + Tauri CLI（参见 [Tauri 2 安装指南](https://tauri.app/start/prerequisites/)）
+
+### 安装依赖
+
+```bash
+pnpm install
+```
+
+### 常用命令
+
+```bash
+pnpm dev            # 启动 Vite 前端开发服务器
+pnpm tauri dev      # 启动 Tauri 桌面开发模式（含热更新）
+pnpm build          # tsc 编译 + Vite 构建（生产包）
+pnpm tauri build    # 打包桌面应用（macOS .dmg / Windows .msi）
+
+pnpm test           # 运行单元测试（Vitest）
+pnpm test:watch     # 监听模式运行测试
+
+pnpm biome:check    # Biome lint + format 检查
+pnpm biome:fix      # Biome 自动修复
+```
+
+---
+
+## 私有工具 / 三方集成 / Private Tools & Third-Party Integration
+
+DevKits 支持将私有工具放在**独立 Git 仓库**（`src/tools-private/`），与主仓库完全隔离，开箱自动注册。
+
+### 工作原理
+
+`src/core/registry.ts` 通过 Vite 的 `import.meta.glob` 自动发现并注册 `src/tools-private/` 下所有工具：
 
 ```typescript
-// src/core/types.ts
-
-type ToolCategory = 'text' | 'codec' | 'crypto' | 'convert' | 'generate' | 'other'
-
-type ToolDefinition = {
-  id: string                          // URL-safe 唯一标识, 如 'log-parser'
-  name: string                        // 显示名, 如 '日志解析器'
-  description: string                 // 一句话描述
-  category: ToolCategory
-  icon: string                        // emoji 或 lucide icon name
-  keywords: string[]                  // 搜索关键词 (中英文)
-  component: React.LazyExoticComponent<React.ComponentType>  // lazy(() => import(...))
-}
-
-// src/tools/log-parser/parsers/types.ts
-
-type ParseResult = {
-  success: boolean
-  data: Record<string, unknown> | null  // 解析后的 JSON 对象
-  raw: string                           // 原始输入
-  parserName: string                    // 命中的解析器名称
-  confidence: number                    // 置信度 0-1
-  error?: string                        // 解析失败时的错误信息
-}
-
-type LogParser = {
-  name: string
-  detect(input: string): number         // 返回置信度 0-1, 0 表示不匹配
-  parse(input: string): ParseResult
+const _privateModules = import.meta.glob<{ tool: ToolDefinition }>(
+  "../tools-private/*/index.ts",
+  { eager: true },
+);
+for (const mod of Object.values(_privateModules)) {
+  if (mod?.tool) {
+    registerTool(mod.tool);
+  }
 }
 ```
 
-## 解析器链设计
+只要在 `src/tools-private/<your-tool>/index.ts` 中导出合法的 `tool: ToolDefinition`，即可自动出现在应用侧边栏中，**无需修改主仓库任何代码**。
 
-### 调度逻辑 (chain.ts)
+### 接入步骤
 
-1. 对所有注册的解析器调用 `detect(input)` 获取置信度
-2. 按置信度降序排列
-3. 对置信度 > 0 的解析器依次调用 `parse(input)`
-4. 返回第一个 `success: true` 的结果
-5. 全部失败则返回 FallbackParser 的结果
+**1. 创建或关联私有工具仓库**
 
-### 解析器列表 (按优先级)
+```bash
+# 方式 A：git submodule（推荐，保持独立版本历史）
+git submodule add git@github.com:your-org/your-private-tools.git src/tools-private
 
-| # | 解析器 | 匹配规则 | 置信度 |
-|---|---|---|---|
-| 1 | JsonDetectParser | 输入以 `{` 或 `[` 开头且 JSON.parse 成功 | 1.0 |
-| 2 | LogFrameworkParser | 匹配 `^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}` 开头 | 0.9 |
-| 3 | ToStringParser | 匹配 `ClassName@hash[` 或 `ClassName[` 或 `ClassName{` | 0.8 |
-| 4 | KVParser | 匹配多个 `key=value` 模式 | 0.5 |
-| 5 | FallbackParser | 任何输入 | 0.1 |
-
-### toString 递归解析器 — 详细规则
-
-这是最复杂的解析器，处理 Java 对象的 `toString()` 输出。
-
-**输入模式:**
-- `ClassName@hexHash[key=value, key=value]` (Commons ToStringBuilder)
-- `ClassName[key=value;key=value;]` (自定义 toString, 分号分隔)
-- `ClassName{key=value, key=value}` (另一种风格)
-- 可混合出现在同一日志中
-
-**解析规则:**
-
-1. **对象识别**: 匹配 `(包名.)*类名(@十六进制)?[` 或 `{` 开始
-2. **分隔符自适应**: 进入新对象后，扫描第一个顶层分隔符确定是 `,` 还是 `;`
-3. **key=value 拆分**: `=` 左边是 key，右边是 value
-4. **value 类型推断** (按优先级):
-   - `<null>` 或 `null` → `null`
-   - `true` / `false` → boolean
-   - 纯数字 → number
-   - 以 `{` 开头 → 先尝试 `JSON.parse()`，成功则作为 JSON 值；失败则作为 toString map 递归解析
-   - 以 `[` 开头 → 判断: 前面有 ClassName 则递归 toString 对象；内容像 JSON array 则 `JSON.parse()`；否则作为 toString 列表
-   - 以 `ClassName@hash[` 或 `ClassName[` 开头 → 递归 toString 对象
-   - Java Date 格式 (`Mon Jan 01 00:00:00 TZ 2026`) → 保留为字符串
-   - 其余 → 字符串
-5. **括号深度**: 维护 `[]` `{}` `()` 三种括号的深度计数，只在深度为 0 时才识别分隔符
-6. **引号处理**: `'单引号'` 和 `"双引号"` 内的内容不拆分
-7. **输出**: `{ "_class": "ClassName", "_hash": "hexHash"(可选), ...parsed_fields }`
-
-## UI 设计
-
-### 主布局
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  DevKits                                         ─  □  ✕    │
-├────────────┬─────────────────────────────────────────────────┤
-│  🔍 搜索    │                                                │
-│            │   工具标题                                      │
-│  📋 文本    │   工具描述                                      │
-│   日志解析  │  ┌───────────────────────────────────────────┐  │
-│   JSON格式化│  │                                           │  │
-│            │  │          工具内容区                         │  │
-│  🔄 编解码  │  │                                           │  │
-│   Base64   │  │                                           │  │
-│            │  │                                           │  │
-│  🕐 转换    │  └───────────────────────────────────────────┘  │
-│   时间戳   │                                                │
-│            │                                                │
-│  🔧 生成    │                                                │
-│   UUID     │                                                │
-└────────────┴─────────────────────────────────────────────────┘
+# 方式 B：直接克隆（不纳入主仓库版本管理）
+git clone git@github.com:your-org/your-private-tools.git src/tools-private
 ```
 
-- **窗口**: 默认 1200x800, 最小 800x600
-- **Sidebar**: 固定宽度 220px, 深色背景
-- **主色调**: 暗色主题 (dark mode 为默认), 参考 VS Code / DevUtils 风格
-- **Sidebar 分组**: 按 `category` 自动分组, 组名显示中文
-- **选中态**: 高亮当前工具, 左边框 accent color
+> `src/tools-private/` 已在 `.gitignore` 中，不会提交到主仓库。
 
-### 日志解析器 UI
+**2. 在私有仓库中创建工具目录**
 
 ```
-┌────────────────────────┬────────────────────────────────┐
-│  Input                 │  Output (JSON)                 │
-│  ┌──────────────────┐  │  ┌──────────────────────────┐  │
-│  │ Monaco Editor    │  │  │ JsonViewer               │  │
-│  │ (plaintext)      │  │  │ (可折叠/搜索/复制)        │  │
-│  │                  │  │  │                          │  │
-│  │                  │  │  │                          │  │
-│  └──────────────────┘  │  └──────────────────────────┘  │
-├────────────────────────┴────────────────────────────────┤
-│ [Auto] [toString] [KV] [Logback]  │ Parser: toString    │
-│                                   │ Confidence: 95%     │
-└───────────────────────────────────┴─────────────────────┘
+your-private-tools/
+└── my-tool/
+    ├── index.ts          # ToolDefinition 导出（必须）
+    └── MyTool.tsx        # 工具 UI 组件
 ```
 
-- **左侧**: Monaco Editor, language=plaintext, 支持粘贴和拖拽文件
-- **右侧**: JSON 树形展示, 支持折叠/展开, 节点可单独复制
-- **分栏**: 可拖拽调整左右宽度, 默认 50:50
-- **底部状态栏**: 当前解析模式 Tab + 右侧显示命中解析器信息
-- **实时解析**: 输入变化后 debounce 300ms 自动解析
+**3. 编写 `index.ts`**
 
+```typescript
+import React from "react";
+// 从主仓库 core 模块导入类型（相对路径）
+import type { ToolDefinition } from "../../core/types.ts";
 
-## 任务列表
-
-### Phase 1: 项目骨架与基础框架
-
-**T1.1 环境初始化**
-- 用 `n` 安装/确认 Node LTS
-- `pnpm create tauri-app devkits` 初始化 Tauri 2 + React + TS + Vite 项目
-- 安装 rustup + stable toolchain
-- 验证 `pnpm tauri dev` 能启动空窗口
-- 依赖: 无 | 产出: 可运行的空 Tauri 窗口
-
-**T1.2 基础依赖安装与配置**
-- 安装 Tailwind CSS 4 + 配置
-- 安装 Biome + 配置 `biome.json` (lint + format 规则)
-- 安装 Vitest + 配置
-- 安装 Monaco Editor (`@monaco-editor/react`)
-- 安装 Zustand
-- 依赖: T1.1 | 产出: 工具链就绪
-
-**T1.3 框架核心 — 工具注册与布局**
-- 按"核心类型定义"实现 `ToolDefinition` 类型
-- 实现工具注册表 `registry.ts`
-- 实现主布局: Sidebar + 工具区 (参考 UI 设计)
-- 按 `category` 自动分组导航
-- 路由: 用 Zustand 管理当前选中工具 (无需 React Router)
-- 实现共享组件: `DualPanel`, `CodeEditor`, `CopyButton`
-- 依赖: T1.2 | 产出: 可以注册空工具并在 sidebar 中切换
-
-**T1.4 占位工具验证**
-- 创建一个最简 Hello World 工具，验证注册→导航→渲染完整链路
-- 验证后删除此占位工具
-- 依赖: T1.3 | 产出: 插件机制验证通过
-
-### Phase 2: 日志解析器 (核心功能)
-
-**T2.1 解析器基础架构**
-- 按"核心类型定义"实现 `LogParser` 接口和 `ParseResult` 类型
-- 实现解析器链调度 `chain.ts` (按置信度选最优，逻辑见"调度逻辑")
-- 实现 FallbackParser
-- 实现 JsonDetectParser
-- 每个解析器必须有单元测试
-- 依赖: T1.2 (只需 Vitest) | 可与 T1.3 并行
-
-**T2.2 日志框架行解析器**
-- 正则匹配: `timestamp [thread] LEVEL logger - [traceContext]message`
-- 提取字段: timestamp, thread, level, logger, traceContext (数组), message
-- message 部分递归送入解析器链继续解析
-- 用真实日志样本编写单元测试
-- 依赖: T2.1
-
-**T2.3 toString 递归解析器 (核心难点)**
-- 严格按照"toString 递归解析器 — 详细规则"实现
-- 编写单元测试覆盖: 嵌套对象、混合分隔符、内嵌 JSON、`<null>`、boolean/number 转型、Java Date
-- 用真实日志样本的各个嵌套层级分别测试
-- 依赖: T2.1 | 可与 T2.2 并行
-
-**T2.4 KV 解析器**
-- 匹配 `key=value` 模式，支持空格/逗号/分号分隔
-- 单元测试
-- 依赖: T2.1 | 可与 T2.2/T2.3 并行
-
-**T2.5 日志解析器 UI**
-- 创建 `tools/log-parser/` 目录，按插件架构导出 ToolDefinition
-- UI 布局参考"日志解析器 UI"设计图
-- 实时解析 (debounce 300ms)
-- 状态栏显示: 命中解析器名 + 置信度
-- 依赖: T1.3 + T2.1~T2.4
-
-**T2.6 集成测试**
-- 用"测试数据"中的真实日志样本做端到端测试
-- 必须通过"解析验证要求"中列出的所有字段校验
-- 依赖: T2.5
-
-### Phase 3: 补充工具 & 完善体验
-
-**T3.1 JSON 格式化工具** — 格式化 / 压缩 / 校验 | 依赖: T1.3
-**T3.2 Base64 编解码工具** | 依赖: T1.3
-**T3.3 时间戳转换工具** — 时间戳 ↔ 可读日期 | 依赖: T1.3
-**T3.4 UUID 生成工具** | 依赖: T1.3
-
-> T3.1-T3.4 互相无依赖，可全部并行
-
-**T3.5 全局搜索 & 快捷键**
-- Sidebar 搜索框模糊匹配工具名 + keywords
-- Cmd+K 全局搜索 (类 Spotlight)
-- 依赖: T3.1-T3.4
-
-### Phase 4: 持续扩展 (按需)
-
-- JWT 解析、URL 编解码、正则测试、Diff 对比、MD5/SHA...
-- 剪贴板智能检测 (粘贴内容自动路由到对应工具)
-- 用户偏好持久化 (暗色模式、最近使用等)
-
-## 任务依赖图
-
-```
-T1.1 → T1.2 → T1.3 → T1.4
-         │       │
-         │       ├→ T2.5 (UI) ←─┐
-         │       │               │
-         │       ├→ T3.1 ┐       │
-         │       ├→ T3.2 ├→ T3.5 │
-         │       ├→ T3.3 │       │
-         │       └→ T3.4 ┘       │
-         │                       │
-         └→ T2.1 ──→ T2.2 ──────┤
-              ├────→ T2.3 ───────┤
-              └────→ T2.4 ───────┘
-                                 └→ T2.6
+export const tool: ToolDefinition = {
+  id: "my-tool",                           // 全局唯一 ID
+  name: { zh: "我的工具", en: "My Tool" }, // 双语名称
+  description: {
+    zh: "这是一个私有工具示例",
+    en: "A private tool example",
+  },
+  category: "other",                       // 见分类说明
+  icon: "🛠️",                             // emoji 图标
+  keywords: ["my-tool", "私有工具"],        // 搜索关键词
+  component: React.lazy(() =>
+    import("./MyTool.tsx").then((m) => ({ default: m.MyTool }))
+  ),
+};
 ```
 
-## 验收标准
+**4. 编写工具 UI 组件 `MyTool.tsx`**
 
-1. `pnpm tauri dev` 启动正常，窗口显示 Sidebar + 工具区，暗色主题
-2. 粘贴"测试数据"中的真实日志 → Auto 模式完整解析为 JSON
-3. "解析验证要求"中列出的所有字段路径和值均正确
-4. 手动切换 toString / KV / Logback 模式均能正确解析对应格式
-5. 新建空工具目录 + 导出 ToolDefinition → 自动出现在 Sidebar
-6. `pnpm test` 所有解析器单元测试通过
-7. `pnpm biome check` 无 lint 错误
+```typescript
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
 
-## 验证
+export function MyTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
 
-1. `pnpm tauri dev` 启动正常,窗口显示 Sidebar + 工具区
-2. 粘贴真实日志样本,Auto 模式下完整解析为 JSON,所有字段无遗漏
-3. 手动切换 toString / KV / Logback 模式均能正确解析对应格式
-4. 新建一个空工具目录 + 导出 ToolDefinition → 自动出现在 Sidebar (验证插件机制)
-5. `pnpm test` 所有解析器单元测试通过
-6. `pnpm biome check` 无 lint 错误
-7. `pnpm tauri build` 能打出 macOS DMG
+  return (
+    <div className="p-4 text-[#d4d4d4]">
+      {/* 你的工具 UI */}
+    </div>
+  );
+}
+```
+
+> **注意**：使用 named export，**禁止 default export**。
+
+### ToolDefinition 字段说明
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `id` | `string` | ✅ | 全局唯一标识符，建议用 kebab-case |
+| `name` | `{ zh: string; en: string }` | ✅ | 侧边栏显示名称（支持双语） |
+| `description` | `{ zh: string; en: string }` | ✅ | 工具简短描述（搜索时匹配） |
+| `category` | `ToolCategory` | ✅ | 分类，决定侧边栏归属组 |
+| `icon` | `string` | ✅ | emoji 图标，显示在侧边栏列表 |
+| `keywords` | `string[]` | ✅ | 搜索关键词（中英文混合均可） |
+| `component` | `React.LazyExoticComponent` | ✅ | `React.lazy()` 包裹的组件，按需加载 |
+
+**ToolCategory 可选值：**
+
+| 值 | 中文分类 | 说明 |
+|----|---------|------|
+| `"text"` | 文本处理 | 文本操作、格式化、对比 |
+| `"codec"` | 编解码 | 编码转换（Base64、Hex、URL等） |
+| `"convert"` | 格式转换 | 数据格式互转（YAML/JSON、CSV等） |
+| `"generate"` | 生成 | 内容生成（UUID、随机字符串、图表等） |
+| `"crypto"` | 加密 | 加密、哈希、密钥生成 |
+| `"other"` | 其他 | 不属于以上分类的工具 |
+
+### 可用共享 API
+
+#### `useToolDraft` — 持久化输入
+
+在工具中替代 `useState("")`，输入内容自动持久化到 `localStorage`：
+
+```typescript
+import { useToolDraft } from "../../core/useToolDraft.ts";
+
+export function MyTool() {
+  const [input, setInput] = useToolDraft("my-tool:input");
+  const [config, setConfig] = useToolDraft("my-tool:config", "default-value");
+
+  return <textarea value={input} onChange={(e) => setInput(e.target.value)} />;
+}
+```
+
+- `key` 格式建议：`"<tool-id>:<field-name>"`（存储键为 `devkits-draft:<key>`）
+- `initial`（可选，默认 `""`）：localStorage 中无值时的初始内容
+
+#### `CodeEditor` — Monaco 代码编辑器
+
+```typescript
+import { CodeEditor } from "../../components/CodeEditor.tsx";
+
+// 只读展示（常用于输出区域）
+<CodeEditor value={output} language="json" readOnly />
+
+// 可编辑输入
+<CodeEditor value={input} onChange={setInput} language="sql" />
+```
+
+支持所有 Monaco 内置语言：`json`、`yaml`、`sql`、`javascript`、`typescript`、`markdown`、`plaintext` 等。
+
+#### `DualPanel` — 左右分栏布局
+
+```typescript
+import { DualPanel } from "../../components/DualPanel.tsx";
+
+<DualPanel
+  left={<textarea value={input} onChange={(e) => setInput(e.target.value)} />}
+  right={<CodeEditor value={output} language="json" readOnly />}
+/>
+```
+
+左右宽度可由用户拖拽调整。
+
+#### `CopyButton` — 一键复制
+
+```typescript
+import { CopyButton } from "../../components/CopyButton.tsx";
+
+<CopyButton text={output} />
+```
+
+点击后自动复制文本到剪贴板，提供短暂的视觉反馈。
+
+#### `getT` — 国际化翻译
+
+```typescript
+import { getT } from "../../i18n/index.ts";
+import { useStore } from "../../core/store.ts";
+
+export function MyTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
+
+  return <span>{t.ui.loading}</span>; // "加载中..." 或 "Loading..."
+}
+```
+
+如需为私有工具添加专属翻译字符串，**在私有仓库内自行维护翻译字典**（不修改主仓库 `src/i18n/index.ts`）：
+
+```typescript
+const myToolI18n = {
+  zh: { title: "我的工具", placeholder: "请输入..." },
+  en: { title: "My Tool", placeholder: "Enter here..." },
+};
+
+// 在组件中使用
+const i18n = myToolI18n[locale];
+return <h2>{i18n.title}</h2>;
+```
+
+### 纯逻辑模块（parsers/）
+
+对于复杂数据处理，建议拆分为纯函数模块放在 `parsers/` 子目录下：
+
+```
+my-tool/
+├── index.ts
+├── MyTool.tsx
+└── parsers/
+    └── my-parser.ts    # 纯函数，零副作用，零 DOM 依赖
+```
+
+解析器规范：
+- 永远不 `throw`，返回 `{ success: true, data }` 或 `{ success: false, error: string }`
+- 不依赖任何 DOM / window API
+- 可独立于 React 运行和测试（Vitest）
+
+---
+
+## 架构说明 / Architecture
+
+```
+┌──────────────────────────────────────────────┐
+│              Tauri 2 (Rust Shell)            │
+│  main.rs: 仅启动 Tauri，无业务逻辑             │
+└────────────────────┬─────────────────────────┘
+                     │ WebView
+┌────────────────────▼─────────────────────────┐
+│              React 18 (Frontend)             │
+│                                              │
+│  App.tsx                                     │
+│  ├── Sidebar.tsx    (Zustand: locale, active)│
+│  └── ToolPage.tsx   (React.Suspense + lazy)  │
+│                                              │
+│  core/                                       │
+│  ├── registry.ts   工具注册 + 私有工具自发现   │
+│  ├── store.ts      Zustand (persist)         │
+│  ├── types.ts      ToolDefinition 类型定义    │
+│  └── useToolDraft  localStorage 输入持久化    │
+│                                              │
+│  tools/            22 个内置工具              │
+│  tools-private/    私有工具（自动发现）        │
+│                                              │
+│  components/       共享 UI 组件               │
+│  i18n/             零依赖国际化               │
+└──────────────────────────────────────────────┘
+
+技术栈：Vite 5 | Tailwind CSS 4 | Monaco Editor | Zustand 5 | Biome
+```
+
+### 关键设计决策
+
+- **所有业务逻辑在 TypeScript 侧完成**，Rust 仅作为 Tauri 启动包装
+- **插件化工具体系**：每个工具自包含，`registry.ts` 统一注册，私有工具通过 `import.meta.glob` 自动发现
+- **零依赖 i18n**：`LocalizedString = { zh; en }` + `getT(locale)` 工厂函数，无第三方 i18n 库
+- **深色主题**：全局使用 VS Code 风格配色（背景 `#1e1e1e`，文字 `#d4d4d4`）
+
+---
+
+## 开发规范 / Development Guide
+
+### 添加内置工具
+
+1. 创建 `src/tools/<tool-name>/` 目录
+2. 创建 `<ToolName>.tsx`：工具 UI（named export）
+3. 创建 `index.ts`：导出 `tool: ToolDefinition`（`React.lazy` 加载组件）
+4. 在 `src/core/registry.ts` 中 import 并调用 `registerTool()`
+5. 在 `src/i18n/index.ts` 的 `translations.tools` 中添加双语字符串
+
+### 代码风格
+
+- 函数组件 + Hooks，禁止 class 组件
+- Named export，禁止 default export
+- 业务类型用 `type`，需要继承时用 `interface`
+- Import 路径带 `.ts` / `.tsx` 后缀
+- Biome 格式化：2 空格缩进、双引号、100 字符行宽
+
+### 测试
+
+单元测试放在 `tests/` 目录，使用 Vitest + jsdom：
+
+```bash
+pnpm test           # 单次运行
+pnpm test:watch     # 监听模式
+```
+
+解析器模块需要有对应的单元测试覆盖。
