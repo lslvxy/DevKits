@@ -14,6 +14,8 @@ export type Translations = {
     favorites: string;
     addFavorite: string;
     removeFavorite: string;
+    collapseSidebar: string;
+    expandSidebar: string;
   };
   categories: {
     text: string;
@@ -247,8 +249,19 @@ export type Translations = {
     };
     sqlFormat: {
       dialect: string;
+      indent: string;
+      indent2: string;
+      indent4: string;
       input: string;
       output: string;
+      shardRewrite: string;
+      positionDirection: string;
+      fromStart: string;
+      fromEnd: string;
+      positionStart: string;
+      positionEnd: string;
+      outputModeFormatted: string;
+      outputModeInline: string;
     };
     sqlPojo: {
       input: string;
@@ -348,6 +361,8 @@ export const translations: Record<Locale, Translations> = {
       favorites: "⭐ 收藏",
       addFavorite: "添加收藏",
       removeFavorite: "取消收藏",
+      collapseSidebar: "折叠侧栏",
+      expandSidebar: "展开侧栏",
     },
     categories: {
       text: "📋 文本",
@@ -579,8 +594,19 @@ export const translations: Record<Locale, Translations> = {
       },
       sqlFormat: {
         dialect: "方言:",
+        indent: "缩进:",
+        indent2: "2 空格",
+        indent4: "4 空格",
         input: "输入 SQL",
         output: "格式化结果",
+        shardRewrite: "分库分表改写",
+        positionDirection: "取位方向:",
+        fromStart: "从前往后",
+        fromEnd: "从后往前",
+        positionStart: "起始位:",
+        positionEnd: "结束位:",
+        outputModeFormatted: "多行",
+        outputModeInline: "单行",
       },
       sqlPojo: {
         input: "CREATE TABLE SQL",
@@ -678,6 +704,8 @@ export const translations: Record<Locale, Translations> = {
       favorites: "⭐ Favorites",
       addFavorite: "Add to favorites",
       removeFavorite: "Remove from favorites",
+      collapseSidebar: "Collapse sidebar",
+      expandSidebar: "Expand sidebar",
     },
     categories: {
       text: "📋 Text",
@@ -910,8 +938,19 @@ export const translations: Record<Locale, Translations> = {
       },
       sqlFormat: {
         dialect: "Dialect:",
+        indent: "Indent:",
+        indent2: "2 spaces",
+        indent4: "4 spaces",
         input: "Input SQL",
         output: "Formatted Result",
+        shardRewrite: "Shard Rewrite",
+        positionDirection: "Direction:",
+        fromStart: "From Start",
+        fromEnd: "From End",
+        positionStart: "Start Position:",
+        positionEnd: "End Position:",
+        outputModeFormatted: "Formatted",
+        outputModeInline: "Inline",
       },
       sqlPojo: {
         input: "CREATE TABLE SQL",

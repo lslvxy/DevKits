@@ -17,6 +17,7 @@ export function Sidebar() {
   } = useStore();
   const searchRef = useRef<HTMLInputElement>(null);
   const [, forceRender] = useState(0);
+  const [collapsed, setCollapsed] = useState(false);
   const t = getT(locale);
 
   // Force render to pick up registered tools
@@ -66,6 +67,23 @@ export function Sidebar() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+
+  if (collapsed) {
+    return (
+      <aside className="flex h-screen w-[48px] min-w-[48px] flex-col bg-[#202020] border-r border-[#333333] items-center py-3 gap-2">
+        <span className="text-xl">🛠️</span>
+        <div className="flex-1" />
+        <button
+          type="button"
+          title={t.ui.expandSidebar}
+          onClick={() => setCollapsed(false)}
+          className="text-[#888] hover:text-[#e0e0e0] transition-colors p-1 rounded"
+        >
+          ▶
+        </button>
+      </aside>
+    );
+  }
 
   return (
     <aside className="flex h-screen w-[230px] min-w-[230px] flex-col bg-[#202020] border-r border-[#333333]">
@@ -175,8 +193,8 @@ export function Sidebar() {
         )}
       </nav>
 
-      {/* Language toggle */}
-      <div className="px-3 py-2 border-t border-[#333333]">
+      {/* Language toggle + collapse */}
+      <div className="px-3 py-2 border-t border-[#333333] flex items-center justify-between">
         <button
           type="button"
           onClick={() => setLocale(locale === "zh" ? "en" : "zh")}
@@ -184,6 +202,14 @@ export function Sidebar() {
         >
           <span>🌐</span>
           <span>{locale === "zh" ? "EN" : "中"}</span>
+        </button>
+        <button
+          type="button"
+          title={t.ui.collapseSidebar}
+          onClick={() => setCollapsed(true)}
+          className="text-xs text-[#888] hover:text-[#e0e0e0] transition-colors p-1 rounded"
+        >
+          ◀
         </button>
       </div>
     </aside>
