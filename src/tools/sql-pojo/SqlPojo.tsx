@@ -60,12 +60,12 @@ function extractBody(sql: string): string {
       }
     }
   }
-  throw new Error(t.tools.sqlPojo.parseError);
+  throw new Error("PARSE_ERROR");
 }
 
 function convert(sql: string): string {
   const tableMatch = sql.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"']?(\w+)[`"']?\s*\(/i);
-  if (!tableMatch) throw new Error(t.tools.sqlPojo.noCreateTable);
+  if (!tableMatch) throw new Error("NO_CREATE_TABLE");
 
   const className = toPascal(tableMatch[1]);
   const body = extractBody(sql);
@@ -127,10 +127,16 @@ export function SqlPojoTool() {
       return;
     }
     try {
-      setOutput(convert(input));
-      setError("");
+        setOutput(convert(input));
+        setError("");
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+        if (e instanceof Error) {
+          if (e.message === "PARSE_ERROR") setError(t.tools.sqlPojo.parseError);
+          else if (e.message === "NO_CREATE_TABLE") setError(t.tools.sqlPojo.noCreateTable);
+          else setError(e.message);
+        } else {
+          setError(String(e));
+        }
       setOutput("");
     }
   }, [input]);

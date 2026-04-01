@@ -31,7 +31,7 @@ function runRegex(
     }
     return { matches, error: null };
   } catch (e) {
-    return { matches: [], error: e instanceof Error ? e.message : t.tools.regexTester.invalidRegex };
+    return { matches: [], error: e instanceof Error ? e.message : "Invalid regex" };
   }
 }
 

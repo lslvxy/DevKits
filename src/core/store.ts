@@ -7,10 +7,17 @@ type AppState = {
   searchQuery: string;
   locale: Locale;
   favoriteToolIds: string[];
+  sidebarAutoCollapse: boolean;
+  setSidebarAutoCollapse: (v: boolean) => void;
   setActiveTool: (id: string | null) => void;
   setSearchQuery: (q: string) => void;
   setLocale: (locale: Locale) => void;
   toggleFavoriteTool: (id: string) => void;
+};
+
+type PersistedState = {
+  sidebarAutoCollapse: boolean;
+  setSidebarAutoCollapse: (v: boolean) => void;
 };
 
 export const useStore = create<AppState>()(
@@ -29,6 +36,8 @@ export const useStore = create<AppState>()(
             ? state.favoriteToolIds.filter((v) => v !== id)
             : [...state.favoriteToolIds, id],
         })),
+      sidebarAutoCollapse: false,
+      setSidebarAutoCollapse: (v: boolean) => set({ sidebarAutoCollapse: v }),
     }),
     {
       name: "devkits-state",
@@ -36,6 +45,7 @@ export const useStore = create<AppState>()(
       partialize: (state) => ({
         locale: state.locale,
         favoriteToolIds: state.favoriteToolIds,
+        sidebarAutoCollapse: (state as unknown as PersistedState).sidebarAutoCollapse,
       }),
     }
   )

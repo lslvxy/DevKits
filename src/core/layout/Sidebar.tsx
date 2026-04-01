@@ -14,10 +14,44 @@ export function Sidebar() {
     setSearchQuery,
     setLocale,
     toggleFavoriteTool,
+    sidebarAutoCollapse,
+    setSidebarAutoCollapse,
   } = useStore();
   const searchRef = useRef<HTMLInputElement>(null);
   const [, forceRender] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  function clearTimer() {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }
+
+  function expandSidebar() {
+    setCollapsed(false);
+    clearTimer();
+    // collapse will be triggered when a tool is opened (activeToolId changes) if sidebarAutoCollapse is enabled
+  }
+
+  function collapseSidebar() {
+    setCollapsed(true);
+    clearTimer();
+  }
+
+  // Watch for tool open events; collapse after 2s if auto-collapse (pin) is enabled
+  useEffect(() => {
+    clearTimer();
+    if (sidebarAutoCollapse && activeToolId) {
+      timerRef.current = window.setTimeout(() => setCollapsed(true), 2000);
+    }
+    return () => clearTimer();
+  }, [activeToolId, sidebarAutoCollapse]);
+
+  useEffect(() => {
+    return () => clearTimer();
+  }, []);
   const t = getT(locale);
 
   // Force render to pick up registered tools
@@ -70,17 +104,21 @@ export function Sidebar() {
 
   if (collapsed) {
     return (
-      <aside className="flex h-screen w-[48px] min-w-[48px] flex-col bg-[#202020] border-r border-[#333333] items-center py-3 gap-2">
+      <aside
+        className="flex h-screen w-[48px] min-w-[48px] flex-col bg-[#202020] border-r border-[#333333] items-center py-3 gap-2 cursor-pointer"
+        onClick={() => expandSidebar()}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            expandSidebar();
+          }
+        }}
+        aria-label={t.ui.expandSidebar}
+      >
         <span className="text-xl">🛠️</span>
         <div className="flex-1" />
-        <button
-          type="button"
-          title={t.ui.expandSidebar}
-          onClick={() => setCollapsed(false)}
-          className="text-[#888] hover:text-[#e0e0e0] transition-colors p-1 rounded"
-        >
-          ▶
-        </button>
+        <div className="text-[#888] hover:text-[#e0e0e0] transition-colors p-1 rounded">▶</div>
       </aside>
     );
   }
@@ -203,14 +241,28 @@ export function Sidebar() {
           <span>🌐</span>
           <span>{locale === "zh" ? "EN" : "中"}</span>
         </button>
-        <button
-          type="button"
-          title={t.ui.collapseSidebar}
-          onClick={() => setCollapsed(true)}
-          className="text-xs text-[#888] hover:text-[#e0e0e0] transition-colors p-1 rounded"
-        >
-          ◀
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            title={t.ui.autoCollapse}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSidebarAutoCollapse(!sidebarAutoCollapse);
+              clearTimer();
+            }}
+            className={`text-xs p-1 rounded ${sidebarAutoCollapse ? "text-[#007acc]" : "text-[#888] hover:text-[#e0e0e0]"}`}
+          >
+            {sidebarAutoCollapse ? "📌" : "📍"}
+          </button>
+          <button
+            type="button"
+            title={t.ui.collapseSidebar}
+            onClick={() => collapseSidebar()}
+            className="text-xs text-[#888] hover:text-[#e0e0e0] transition-colors p-1 rounded"
+          >
+            ◀
+          </button>
+        </div>
       </div>
     </aside>
   );

@@ -16,6 +16,7 @@ export type Translations = {
     removeFavorite: string;
     collapseSidebar: string;
     expandSidebar: string;
+    autoCollapse: string;
   };
   categories: {
     text: string;
@@ -93,14 +94,11 @@ export type Translations = {
       invalidJwt: string;
       parseFailed: string;
       headerSubtitle: string;
-        expired: string;
-        valid: string;
-        expiresAt: string;
-        issuedAt: string;
       expired: string;
       valid: string;
-      expiry: string;
+      expiresAt: string;
       issuedAt: string;
+      expiry: string;
     };
     jsonFormatter: {
       format: string;
@@ -197,6 +195,8 @@ export type Translations = {
       decodeResult: string;
       decodeFailed: string;
       readFileFailed: string;
+      chooseImage: string;
+      imagePreview: string;
     };
     randomString: {
       genOptions: string;
@@ -246,6 +246,7 @@ export type Translations = {
       rsaPKCSInfo: string;
       keyFormatInfo: string;
       keepPrivateKeySecret: string;
+      processFailed: string;
     };
     sqlFormat: {
       dialect: string;
@@ -271,6 +272,8 @@ export type Translations = {
       packageName: string;
       useLombok: string;
       generateOptions: string;
+      parseError: string;
+      noCreateTable: string;
     };
     textDiff: {
       leftPanel: string;
@@ -363,6 +366,7 @@ export const translations: Record<Locale, Translations> = {
       removeFavorite: "取消收藏",
       collapseSidebar: "折叠侧栏",
       expandSidebar: "展开侧栏",
+      autoCollapse: "自动折叠 (2s)",
     },
     categories: {
       text: "📋 文本",
@@ -436,14 +440,14 @@ export const translations: Record<Locale, Translations> = {
       },
       jwt: {
         jwtToken: "JWT Token",
-          expired: "已过期",
-          valid: "有效",
-          expiresAt: "过期时间",
-          issuedAt: "签发时间",
         jwtPlaceholder: "粘贴 JWT Token（格式: xxxxx.yyyyy.zzzzz）...",
         invalidJwt: "无效的 JWT：需要恰好 3 个部分（header.payload.signature）",
         parseFailed: "解析失败：",
         headerSubtitle: "（算法 & 类型）",
+        expired: "已过期",
+        valid: "有效",
+        expiresAt: "过期时间",
+        issuedAt: "签发时间",
         expiry: "过期时间：",
       },
       jsonFormatter: {
@@ -498,8 +502,8 @@ export const translations: Record<Locale, Translations> = {
       hexAscii: {
         ascii2hex: "ASCII → Hex",
         hex2ascii: "Hex → ASCII",
-          output: "输出",
         input: "输入",
+        output: "输出",
         asciiPlaceholder: "输入 ASCII 文本...",
         hexPlaceholder: "输入 Hex 字符串 (如: 48 65 6c 6c 6f)...",
         uppercase: "大写",
@@ -591,6 +595,7 @@ export const translations: Record<Locale, Translations> = {
         rsaPKCSInfo: "RSASSA-PKCS1-v1_5：适用于数字签名/验证场景",
         keyFormatInfo: "公钥格式：SPKI (SubjectPublicKeyInfo)，私钥格式：PKCS#8",
         keepPrivateKeySecret: "⚠️ 请妥善保管",
+        processFailed: "处理失败",
       },
       sqlFormat: {
         dialect: "方言:",
@@ -706,6 +711,7 @@ export const translations: Record<Locale, Translations> = {
       removeFavorite: "Remove from favorites",
       collapseSidebar: "Collapse sidebar",
       expandSidebar: "Expand sidebar",
+      autoCollapse: "Auto collapse (2s)",
     },
     categories: {
       text: "📋 Text",
@@ -784,11 +790,11 @@ export const translations: Record<Locale, Translations> = {
         jwtPlaceholder: "Paste JWT Token (format: xxxxx.yyyyy.zzzzz)...",
         invalidJwt: "Invalid JWT: must have exactly 3 parts (header.payload.signature)",
         parseFailed: "Parse failed: ",
-          expired: "Expired",
-          valid: "Valid",
-          expiresAt: "Expires at",
-          issuedAt: "Issued at",
         headerSubtitle: "(algorithm & type)",
+        expired: "Expired",
+        valid: "Valid",
+        expiresAt: "Expires at",
+        issuedAt: "Issued at",
         expiry: "Expiry: ",
       },
       jsonFormatter: {
@@ -886,6 +892,8 @@ export const translations: Record<Locale, Translations> = {
         decodeResult: "Decoded Result",
         decodeFailed: "Unable to recognize QR code",
         readFileFailed: "Failed to read file",
+        chooseImage: "Choose Image",
+        imagePreview: "Image Preview",
       },
       randomString: {
         genOptions: "Generation Options",
@@ -935,6 +943,7 @@ export const translations: Record<Locale, Translations> = {
         rsaPKCSInfo: "RSASSA-PKCS1-v1_5: Suitable for digital signing/verification scenarios",
         keyFormatInfo: "Public key format: SPKI (SubjectPublicKeyInfo), Private key format: PKCS#8",
         keepPrivateKeySecret: "⚠️ Keep the private key safe",
+        processFailed: "Process failed",
       },
       sqlFormat: {
         dialect: "Dialect:",
