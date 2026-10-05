@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
-import { getT } from "../../i18n/index.ts";
-import { useStore } from "../../core/store.ts";
-import { useToolDraft } from "../../core/useToolDraft.ts";
+import { useCallback, useDeferredValue, useEffect, useState } from "react";
 import { CodeEditor } from "../../components/CodeEditor.tsx";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
+import { useStore } from "../../core/store.ts";
+import { useToolDraft } from "../../core/useToolDraft.ts";
+import { getT } from "../../i18n/index.ts";
 
 type Mode = "format" | "compact" | "validate" | "escape" | "unescape";
 
@@ -30,67 +30,71 @@ export function JsonFormatter() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
   const [input, setInput] = useToolDraft("json-formatter:input");
+  const deferredInput = useDeferredValue(input);
   const [output, setOutput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("format");
   const [indent, setIndent] = useState(2);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
-  useEffect(() => { if (input) process(input, mode, indent); }, []);
-
-  const process = (text: string, m: Mode, ind: number) => {
-    if (!text.trim()) {
-      setOutput("");
-      setError(null);
-      return;
-    }
-    try {
-      if (m === "escape") {
-        setOutput(escapeJsonString(text));
+  const process = useCallback(
+    (text: string, m: Mode, ind: number) => {
+      if (!text.trim()) {
+        setOutput("");
         setError(null);
         return;
       }
-      if (m === "unescape") {
-        try {
-          setOutput(unescapeJsonString(text));
+      try {
+        if (m === "escape") {
+          setOutput(escapeJsonString(text));
           setError(null);
-        } catch {
-          setError(t.tools.jsonFormatter.invalidEscape);
-          setOutput("");
+          return;
         }
-        return;
+        if (m === "unescape") {
+          try {
+            setOutput(unescapeJsonString(text));
+            setError(null);
+          } catch {
+            setError(t.tools.jsonFormatter.invalidEscape);
+            setOutput("");
+          }
+          return;
+        }
+        const parsed = JSON.parse(text);
+        if (m === "format") {
+          setOutput(JSON.stringify(parsed, null, ind));
+          setError(null);
+        } else if (m === "compact") {
+          setOutput(JSON.stringify(parsed));
+          setError(null);
+        } else {
+          // validate
+          setOutput(
+            `✓ ${t.tools.jsonFormatter.validJson}\n\n${t.tools.jsonFormatter.typeArray}: ${Array.isArray(parsed) ? t.tools.jsonFormatter.typeArray : typeof parsed}`
+          );
+          setError(null);
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : t.tools.jsonFormatter.parseFailed);
+        setOutput("");
       }
-      const parsed = JSON.parse(text);
-      if (m === "format") {
-        setOutput(JSON.stringify(parsed, null, ind));
-        setError(null);
-      } else if (m === "compact") {
-        setOutput(JSON.stringify(parsed));
-        setError(null);
-      } else {
-        // validate
-        setOutput(`✓ ${t.tools.jsonFormatter.validJson}\n\n${t.tools.jsonFormatter.typeArray}: ${Array.isArray(parsed) ? t.tools.jsonFormatter.typeArray : typeof parsed}`);
-        setError(null);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t.tools.jsonFormatter.parseFailed);
-      setOutput("");
-    }
-  };
+    },
+    [t]
+  );
+
+  useEffect(() => {
+    process(deferredInput, mode, indent);
+  }, [deferredInput, mode, indent, process]);
 
   const handleInput = (v: string) => {
     setInput(v);
-    process(v, mode, indent);
   };
 
   const handleMode = (m: Mode) => {
     setMode(m);
-    process(input, m, indent);
   };
 
   const handleIndent = (n: number) => {
     setIndent(n);
-    process(input, mode, n);
   };
 
   const isEscapeMode = mode === "escape" || mode === "unescape";
@@ -150,7 +154,9 @@ export function JsonFormatter() {
             left={
               <div className="flex flex-col h-full">
                 <div className="px-3 py-1 bg-[#252526] border-b border-[#3e3e42] text-xs text-[#858585]">
-                  {mode === "escape" ? t.tools.jsonFormatter.rawString : t.tools.jsonFormatter.jsonEscapedString}
+                  {mode === "escape"
+                    ? t.tools.jsonFormatter.rawString
+                    : t.tools.jsonFormatter.jsonEscapedString}
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <CodeEditor value={input} onChange={handleInput} language="plaintext" />
@@ -179,7 +185,7 @@ export function JsonFormatter() {
             left={
               <div className="flex flex-col h-full">
                 <div className="px-3 py-1 bg-[#252526] border-b border-[#3e3e42] text-xs text-[#858585]">
-                    {t.tools.jsonFormatter.input}
+                  {t.tools.jsonFormatter.input}
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <CodeEditor value={input} onChange={handleInput} language="json" />
@@ -189,7 +195,7 @@ export function JsonFormatter() {
             right={
               <div className="flex flex-col h-full">
                 <div className="px-3 py-1 bg-[#252526] border-b border-[#3e3e42] text-xs text-[#858585]">
-                    {t.tools.jsonFormatter.output}
+                  {t.tools.jsonFormatter.output}
                 </div>
                 <div className="flex-1 overflow-hidden">
                   {error ? (

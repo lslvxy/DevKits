@@ -22,7 +22,7 @@
 
 ## 功能概览 / Built-in Tools
 
-共 22 个内置工具，按分类组织：
+内置工具按分类组织：
 
 ### 📝 文本处理 (text)
 
@@ -33,6 +33,12 @@
 | 🔍 | **正则表达式** / Regex Tester | 正则表达式测试与匹配高亮 |
 | 🗄️ | **SQL 格式化** / SQL Formatter | 格式化 SQL 语句 |
 | 📋 | **日志解析器** / Log Parser | 解析 Java 日志，支持 Logback/Log4j、toString、KV 格式 |
+| 📝 | **文本批处理** / Text Batch | 按行去重、排序、清理空白、大小写转换、添加前后缀 |
+| 🔎 | **JSONPath 查询** / JSONPath Query | RFC 9535 查询、过滤、递归搜索和路径提取 |
+| ☕ | **Java 堆栈分析** / Java Stack Analyzer | 提取主异常根因、suppressed 异常、业务帧及源码位置 |
+| 📄 | **XML 格式化** / XML Formatter | 格式化、压缩与语法校验，保留混合内容 |
+| 🔍 | **JSON 结构对比** / JSON Structural Diff | 忽略对象键顺序，按字段和数组下标比较差异 |
+| 📝 | **Markdown 预览** / Markdown Preview | 表格、代码块预览与净化 HTML 复制 |
 
 ### 🔄 编解码 (codec)
 
@@ -43,6 +49,8 @@
 | 🔑 | **JWT 解析** / JWT Decoder | 解析 JWT Token 的 Header 和 Payload |
 | 🔢 | **Hex/ASCII 转换** / Hex/ASCII Converter | Hex 与 ASCII 文本互转 |
 | 🔗 | **URL 编解码** / URL Codec | URL 编码（percent-encoding）与解码 |
+| 🔤 | **HTML 实体编解码** / HTML Entities | 命名实体、十进制与十六进制实体编解码 |
+| 📦 | **Gzip 压缩解压** / Gzip Codec | UTF-8 文本与 Gzip Base64 互转，输出限额及任务取消 |
 
 ### 🔁 格式转换 (convert)
 
@@ -52,6 +60,8 @@
 | 🔀 | **YAML/JSON 转换** / YAML/JSON Converter | YAML 与 JSON 格式互转 |
 | 📋 | **CSV/JSON 转换** / CSV/JSON Converter | CSV 与 JSON 格式互转 |
 | ☕ | **SQL → POJO** | CREATE TABLE SQL 转换为 Java POJO 类 |
+| ⚙️ | **Properties / YAML** | Spring 配置互转，支持嵌套路径、数组、转义和续行 |
+| 🔢 | **进制转换** / Number Base Converter | 2–36 进制整数转换，支持大整数、负数和进制前缀 |
 
 ### ✨ 生成 (generate)
 
@@ -60,15 +70,15 @@
 | 🔧 | **UUID 生成器** / UUID Generator | 生成 UUID v4 / v7 / NanoID |
 | 🎲 | **随机字符串** / Random String | 生成可配置的随机字符串 |
 | 📈 | **Mermaid 流程图** / Mermaid Diagram | 使用 Mermaid 语法绘制流程图 |
-| 🎯 | **PlantUML 流程图** / PlantUML Diagram | 使用 PlantUML 语法绘制 UML 图 |
+| 🎯 | **PlantUML 流程图** / PlantUML Diagram | 使用 PlantUML 语法绘制 UML 图（本地/联网双模式） |
 | 📱 | **QR Code** | 生成和扫描解析二维码 |
 
 ### 🔐 加密 (crypto)
 
 | 图标 | 工具 | 描述 |
 |------|------|------|
-| 🔐 | **加解密工具** / Crypto Tools | Hash（MD5/SHA）、AES 加解密、HMAC |
-| 🗝️ | **RSA 密钥生成** / RSA Key Generator | 生成 RSA 公私钥对（PEM 格式） |
+| 🔐 | **加解密工具** / Crypto Tools | Hash（MD5/SHA）、AES/RSA 加解密、HMAC |
+| 🗝️ | **RSA 密钥生成** / RSA Key Generator | 生成 RSA 公私钥对（PEM，可导出）、密钥去密码 |
 
 ### 🔩 其他 (other)
 
@@ -135,6 +145,7 @@
 - [Node.js](https://nodejs.org/) ≥ 20（推荐用 `n` 管理版本，**禁止 nvm**）
 - [pnpm](https://pnpm.io/) ≥ 9（**禁止 npm/yarn**）
 - [Rust](https://rustup.rs/) + Tauri CLI（参见 [Tauri 2 安装指南](https://tauri.app/start/prerequisites/)）
+- [Java](https://adoptium.net/) ≥ 8（PlantUML **本地渲染模式**依赖，`java` 需在 PATH 中；联网模式无需 Java）
 
 ### 安装依赖
 
@@ -165,19 +176,22 @@ DevKits 支持将私有工具放在**独立 Git 仓库**（`src/tools-private/`�
 
 ### 工作原理
 
-`src/core/registry.ts` 通过 Vite 的 `import.meta.glob` 自动发现并注册 `src/tools-private/` 下所有工具：
+`src/core/registry.ts` 通过 Vite 的 `import.meta.glob` 自动发现并注册 `src/tools/` 与 `src/tools-private/` 下所有工具：
 
 ```typescript
-const _privateModules = import.meta.glob<{ tool: ToolDefinition }>(
-  "../tools-private/*/index.ts",
+const _toolModules = import.meta.glob<{ tool?: ToolDefinition }>(
+  ["../tools/*/index.ts", "../tools-private/*/index.ts"],
   { eager: true },
 );
-for (const mod of Object.values(_privateModules)) {
+for (const [path, mod] of Object.entries(_toolModules)) {
   if (mod?.tool) {
-    registerTool(mod.tool);
+    registerTool(mod.tool, path);
   }
 }
 ```
+
+注册时会对 `ToolDefinition` 做 schema 校验，坏插件被记录到 `issues` 并在侧边栏以 ⚠️ 提示，
+不会静默丢弃。
 
 只要在 `src/tools-private/<your-tool>/index.ts` 中导出合法的 `tool: ToolDefinition`，即可自动出现在应用侧边栏中，**无需修改主仓库任何代码**。
 
@@ -254,10 +268,15 @@ export function MyTool() {
 | `id` | `string` | ✅ | 全局唯一标识符，建议用 kebab-case |
 | `name` | `{ zh: string; en: string }` | ✅ | 侧边栏显示名称（支持双语） |
 | `description` | `{ zh: string; en: string }` | ✅ | 工具简短描述（搜索时匹配） |
-| `category` | `ToolCategory` | ✅ | 分类，决定侧边栏归属组 |
+| `category` | `string` | ✅ | 分类，内置分类或 `registerCategory` 注册的自定义分类 |
 | `icon` | `string` | ✅ | emoji 图标，显示在侧边栏列表 |
 | `keywords` | `string[]` | ✅ | 搜索关键词（中英文混合均可） |
-| `component` | `React.LazyExoticComponent` | ✅ | `React.lazy()` 包裹的组件，按需加载 |
+| `component` | `ComponentType \| LazyExoticComponent` | ✅ | 工具 UI，推荐 `React.lazy` 按需加载 |
+| `version` | `string` | ⬜ | 语义化版本号 |
+| `type` | `"builtin" \| "plugin"` | ⬜ | 标记内置或第三方工具 |
+| `i18n` | `Partial<Record<Locale, Record<string, string>>>` | ⬜ | 工具自带翻译（见 `getToolT`） |
+| `settings` | `ComponentType \| LazyExoticComponent` | ⬜ | 可选设置面板（工具头部 ⚙️ 打开） |
+| `activate` | `() => void \| Promise<void>` | ⬜ | 注册后调用一次的生命周期钩子 |
 
 **ToolCategory 可选值：**
 
@@ -282,6 +301,7 @@ import { useToolDraft } from "../../core/useToolDraft.ts";
 export function MyTool() {
   const [input, setInput] = useToolDraft("my-tool:input");
   const [config, setConfig] = useToolDraft("my-tool:config", "default-value");
+  const [secret, setSecret] = useToolDraft("my-tool:secret", "", { sensitive: true });
 
   return <textarea value={input} onChange={(e) => setInput(e.target.value)} />;
 }
@@ -289,6 +309,48 @@ export function MyTool() {
 
 - `key` 格式建议：`"<tool-id>:<field-name>"`（存储键为 `devkits-draft:<key>`）
 - `initial`（可选，默认 `""`）：localStorage 中无值时的初始内容
+- `sensitive: true`（可选）：值仅保存在内存中，**不写入 localStorage**（适合密钥/私钥等敏感字段）
+- 写入 localStorage 会自动节流（300ms 尾随），避免每次击键阻塞主线程
+
+#### `getToolT` — 工具自带翻译
+
+通过 `ToolDefinition.i18n` 字段为第三方工具提供专属翻译，无需修改主仓库 i18n：
+
+```typescript
+import { getToolT } from "../../core/registry.ts";
+import { useStore } from "../../core/store.ts";
+
+export function MyTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getToolT("my-tool", locale);
+
+  return <h2>{t.title}</h2>;
+}
+```
+
+对应 `index.ts` 中声明：
+
+```typescript
+export const tool: ToolDefinition = {
+  // ...
+  i18n: {
+    zh: { title: "我的工具", placeholder: "请输入..." },
+    en: { title: "My Tool", placeholder: "Enter here..." },
+  },
+};
+```
+
+#### `registerCategory` — 自定义分类
+
+第三方工具可使用任意 `category` 字符串，并在 `index.ts` 中注册其双语标签：
+
+```typescript
+import { registerCategory } from "../../core/registry.ts";
+
+registerCategory("db-tools", { zh: "🗄️ 数据库", en: "🗄️ Database" });
+```
+
+自定义分类会按发现顺序追加在内置分类之后。
 
 #### `CodeEditor` — Monaco 代码编辑器
 
@@ -341,7 +403,8 @@ export function MyTool() {
 }
 ```
 
-如需为私有工具添加专属翻译字符串，**在私有仓库内自行维护翻译字典**（不修改主仓库 `src/i18n/index.ts`）：
+如需为私有工具添加专属翻译字符串，**推荐使用 `ToolDefinition.i18n` + `getToolT`**（见上文），
+或在私有仓库内自行维护翻译字典（不修改主仓库 `src/i18n/index.ts`）：
 
 ```typescript
 const myToolI18n = {
@@ -378,7 +441,7 @@ my-tool/
 ```
 ┌──────────────────────────────────────────────┐
 │              Tauri 2 (Rust Shell)            │
-│  main.rs: 仅启动 Tauri，无业务逻辑             │
+│  main.rs: 启动 + render_plantuml / strip_private_key_passphrase 命令 │
 └────────────────────┬─────────────────────────┘
                      │ WebView
 ┌────────────────────▼─────────────────────────┐
@@ -389,10 +452,12 @@ my-tool/
 │  └── ToolPage.tsx   (React.Suspense + lazy)  │
 │                                              │
 │  core/                                       │
-│  ├── registry.ts   工具注册 + 私有工具自发现   │
+│  ├── registry.ts   工具注册 + 自动发现(响应式) │
 │  ├── store.ts      Zustand (persist)         │
 │  ├── types.ts      ToolDefinition 类型定义    │
-│  └── useToolDraft  localStorage 输入持久化    │
+│  ├── useToolDraft  localStorage 输入持久化    │
+│  ├── useDebouncedValue 防抖                   │
+│  └── monaco.ts     Monaco 本地加载 + worker   │
 │                                              │
 │  tools/            22 个内置工具              │
 │  tools-private/    私有工具（自动发现）        │
@@ -406,8 +471,9 @@ my-tool/
 
 ### 关键设计决策
 
-- **所有业务逻辑在 TypeScript 侧完成**，Rust 仅作为 Tauri 启动包装
-- **插件化工具体系**：每个工具自包含，`registry.ts` 统一注册，私有工具通过 `import.meta.glob` 自动发现
+- **业务逻辑以 TypeScript 为主**，Rust 除启动外提供 `render_plantuml`（内嵌 `plantuml.jar` 本地渲染，也支持联网模式）与 `strip_private_key_passphrase`（`pkcs8` crate 去除私钥 passphrase）
+- **插件化工具体系**：每个工具自包含，`registry.ts` 通过 `import.meta.glob` 统一自动发现内置与私有工具，响应式（`useSyncExternalStore`）驱动侧边栏
+- **注册校验**：工具定义在注册时做 schema 校验，坏插件不静默丢弃（侧边栏 ⚠️ 提示）
 - **零依赖 i18n**：`LocalizedString = { zh; en }` + `getT(locale)` 工厂函数，无第三方 i18n 库
 - **深色主题**：全局使用 VS Code 风格配色（背景 `#1e1e1e`，文字 `#d4d4d4`）
 
@@ -420,8 +486,10 @@ my-tool/
 1. 创建 `src/tools/<tool-name>/` 目录
 2. 创建 `<ToolName>.tsx`：工具 UI（named export）
 3. 创建 `index.ts`：导出 `tool: ToolDefinition`（`React.lazy` 加载组件）
-4. 在 `src/core/registry.ts` 中 import 并调用 `registerTool()`
-5. 在 `src/i18n/index.ts` 的 `translations.tools` 中添加双语字符串
+4. 在 `src/i18n/index.ts` 的 `translations.tools` 中添加双语字符串（或使用 `i18n` 字段自带翻译）
+
+`registry.ts` 通过 `import.meta.glob` 自动发现 `src/tools/*/index.ts` 与
+`src/tools-private/*/index.ts`，**无需手动 import / registerTool**。
 
 ### 代码风格
 
@@ -441,3 +509,29 @@ pnpm test:watch     # 监听模式
 ```
 
 解析器模块需要有对应的单元测试覆盖。
+
+### 新增工具使用说明
+
+四个新增工具均按需加载，使用双语界面、输入草稿保存和结果复制。点击「处理」生成结果，修改输入或选项后需重新处理；结果不会额外持久化。处理在本地进行。
+
+- **文本批处理**：去重保留首次出现的顺序；空行清理包含只有空白的行；前后缀按字面值添加。按行操作统一输出 LF 换行。
+- **JSONPath**：例如 `$.users[*].name`、`$.users[?@.age >= 18].name`、`$..name`。结果为 JSON 数组，无匹配返回 `[]`；可选择返回规范化路径。使用 `jsonpath-rfc9535`（Apache-2.0），支持 RFC 9535 语法，不支持任意 JavaScript 表达式。
+- **Properties / YAML**：例如 `server.port=8080`、`items[0].name=demo`。Properties 值始终保留为字符串，重复键取最后一个值；YAML 数字和布尔值转为字符串。注释不保留；路径冲突、稀疏数组、null、嵌套空容器、带 `.` / `[]` 的 YAML 键及循环别名会报告错误，避免静默丢失数据。不是完整的 Spring Binder，也不执行占位符替换。
+- **Java 堆栈分析**：每次粘贴一个完整的标准 Java 异常。识别以 Exception、Error 或 Throwable 结尾的异常类名，提取最深主异常；suppressed 及其 cause 单独标记。业务包前缀用逗号分隔，可过滤常见 JDK、Spring、Apache 等框架栈。保留省略帧数量，不推测省略的源码位置；日志包装或缩进被破坏的输入可能需要先清理。
+
+新增逻辑回归用例位于 `tests/tools/`，涵盖 JSONPath 过滤和路径、配置转义与冲突、suppressed 异常根因，以及文本换行边界。
+
+### 参考工具箱补充的第二批工具
+
+本批借鉴 DevToys、IT-Tools、OmniTools 的常用功能方向，使用 DevKits 原有注册和懒加载机制实现。没有复制这些项目的应用外壳或工具源码。
+
+- **XML**：支持缩进、压缩和 well-formed 语法检查；保留混合文本、CDATA 和 `xml:space`。不支持 DOCTYPE、DTD 或 XSD 校验，嵌套限 100 层。
+- **HTML 实体**：支持命名、十进制、十六进制实体，解码结果作为文本展示，不执行 HTML。
+- **进制转换**：支持 2–36 进制、正负整数及对应的 `0b` / `0o` / `0x` 前缀；使用 BigInt 保留精度，输入限 4096 位，不支持小数或补码解释。
+- **Gzip**：压缩 UTF-8 文本得到 Base64，或从 Gzip Base64 解压为 UTF-8。输入和输出各限 16 MiB；支持取消，离开工具会取消任务。需要系统 WebView 提供 Compression Streams API；不支持任意二进制文件导入导出。
+- **JSON 结构对比**：忽略对象键顺序，保留数组顺序；输出新增、删除、修改记录，路径遵循 JSON Pointer。空路径表示根节点；差异限 10000 项、嵌套限 100 层。超出 JavaScript 安全整数范围的数字会报错，请用字符串表示长 ID。
+- **Markdown**：支持 GFM 表格及代码块，可切换净化 HTML 源码或预览；点击处理更新。预览在沙箱 iframe 中呈现，禁用脚本、网络资源与交互控件，链接仅显示文本；输入限 1,048,576 个 UTF-16 代码单元。复制按钮复制净化后的 HTML。
+
+依赖：`he`（MIT）、`marked`（MIT）、`dompurify`（Apache-2.0 或 MPL-2.0）。Gzip、XML、进制和结构对比使用浏览器 API 或独立实现。
+
+功能取舍、参考来源和后续候选见 [TOOLS_COMPARISON.md](./TOOLS_COMPARISON.md)。新增回归用例在 `tests/tools/`；本轮未运行构建或测试。

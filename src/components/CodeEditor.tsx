@@ -1,4 +1,5 @@
 import MonacoEditor from "@monaco-editor/react";
+import "../core/monaco.ts";
 
 type Props = {
   value: string;
@@ -15,17 +16,21 @@ export function CodeEditor({
   readOnly = false,
   height = "100%",
 }: Props) {
+  // Wrapping and tokenizing large generated/log documents adds substantial state.
+  const largeDocument = value.length > 1024 * 1024;
   return (
     <MonacoEditor
       height={height}
-      language={language}
+      language={largeDocument ? "plaintext" : language}
       value={value}
       theme="vs-dark"
+      keepCurrentModel={false}
+      saveViewState={false}
       options={{
         readOnly,
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
-        wordWrap: "on",
+        wordWrap: largeDocument ? "off" : "on",
         fontSize: 13,
         lineNumbers: "on",
         renderLineHighlight: "line",

@@ -2,22 +2,23 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { Locale } from "../i18n/index.ts";
 
+type PlantUmlMode = "local" | "remote";
+
 type AppState = {
   activeToolId: string | null;
   searchQuery: string;
   locale: Locale;
   favoriteToolIds: string[];
   sidebarAutoCollapse: boolean;
+  plantumlMode: PlantUmlMode;
+  plantumlServer: string;
   setSidebarAutoCollapse: (v: boolean) => void;
   setActiveTool: (id: string | null) => void;
   setSearchQuery: (q: string) => void;
   setLocale: (locale: Locale) => void;
   toggleFavoriteTool: (id: string) => void;
-};
-
-type PersistedState = {
-  sidebarAutoCollapse: boolean;
-  setSidebarAutoCollapse: (v: boolean) => void;
+  setPlantumlMode: (mode: PlantUmlMode) => void;
+  setPlantumlServer: (url: string) => void;
 };
 
 export const useStore = create<AppState>()(
@@ -27,6 +28,9 @@ export const useStore = create<AppState>()(
       searchQuery: "",
       locale: "zh",
       favoriteToolIds: [],
+      sidebarAutoCollapse: false,
+      plantumlMode: "local",
+      plantumlServer: "https://www.plantuml.com/plantuml",
       setActiveTool: (id) => set({ activeToolId: id }),
       setSearchQuery: (q) => set({ searchQuery: q }),
       setLocale: (locale) => set({ locale }),
@@ -36,8 +40,9 @@ export const useStore = create<AppState>()(
             ? state.favoriteToolIds.filter((v) => v !== id)
             : [...state.favoriteToolIds, id],
         })),
-      sidebarAutoCollapse: false,
       setSidebarAutoCollapse: (v: boolean) => set({ sidebarAutoCollapse: v }),
+      setPlantumlMode: (mode: PlantUmlMode) => set({ plantumlMode: mode }),
+      setPlantumlServer: (url: string) => set({ plantumlServer: url }),
     }),
     {
       name: "devkits-state",
@@ -45,7 +50,9 @@ export const useStore = create<AppState>()(
       partialize: (state) => ({
         locale: state.locale,
         favoriteToolIds: state.favoriteToolIds,
-        sidebarAutoCollapse: (state as unknown as PersistedState).sidebarAutoCollapse,
+        sidebarAutoCollapse: state.sidebarAutoCollapse,
+        plantumlMode: state.plantumlMode,
+        plantumlServer: state.plantumlServer,
       }),
     }
   )

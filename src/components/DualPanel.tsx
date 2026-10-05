@@ -11,6 +11,8 @@ export function DualPanel({ left, right, defaultSplit = 50 }: Props) {
   const [split, setSplit] = useState(defaultSplit);
   const dragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const pendingSplit = useRef(defaultSplit);
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -23,8 +25,15 @@ export function DualPanel({ left, right, defaultSplit = 50 }: Props) {
     const onMouseMove = (e: MouseEvent) => {
       if (!dragging.current || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const newSplit = Math.min(80, Math.max(20, ((e.clientX - rect.left) / rect.width) * 100));
-      setSplit(newSplit);
+      pendingSplit.current = Math.min(
+        80,
+        Math.max(20, ((e.clientX - rect.left) / rect.width) * 100)
+      );
+      if (rafRef.current !== null) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        setSplit(pendingSplit.current);
+      });
     };
     const onMouseUp = () => {
       if (!dragging.current) return;
@@ -37,6 +46,7 @@ export function DualPanel({ left, right, defaultSplit = 50 }: Props) {
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
   }, []);
 

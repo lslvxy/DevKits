@@ -17,6 +17,10 @@ export type Translations = {
     collapseSidebar: string;
     expandSidebar: string;
     autoCollapse: string;
+    settings: string;
+    clearData: string;
+    clearDataConfirm: string;
+    pluginIssues: string;
   };
   categories: {
     text: string;
@@ -122,6 +126,7 @@ export type Translations = {
       hashTab: string;
       hmacTab: string;
       aesTab: string;
+      rsaTab: string;
       inputText: string;
       inputHashPlaceholder: string;
       computing: string;
@@ -140,6 +145,13 @@ export type Translations = {
       encryptPlaceholder: string;
       decryptPlaceholder: string;
       processFailed: string;
+      rsaPublicKey: string;
+      rsaPrivateKey: string;
+      rsaKeyPlaceholder: string;
+      rsaPlaintextPlaceholder: string;
+      rsaCiphertextPlaceholder: string;
+      rsaNote: string;
+      rsaEmpty: string;
     };
     csvJson: {
       csvInput: string;
@@ -147,6 +159,14 @@ export type Translations = {
       csvOutput: string;
       jsonOutput: string;
       inputPlaceholder: string;
+      delimiter: string;
+      auto: string;
+      comma: string;
+      semicolon: string;
+      tab: string;
+      pipe: string;
+      custom: string;
+      customPlaceholder: string;
     };
     hexAscii: {
       ascii2hex: string;
@@ -183,6 +203,15 @@ export type Translations = {
       renderError: string;
       emptyPrompt: string;
       loading: string;
+      localRenderNote: string;
+      javaHint: string;
+      renderMode: string;
+      localMode: string;
+      remoteMode: string;
+      server: string;
+      serverHint: string;
+      remoteNote: string;
+      remoteWarning: string;
     };
     qrcode: {
       generateTab: string;
@@ -247,6 +276,19 @@ export type Translations = {
       keyFormatInfo: string;
       keepPrivateKeySecret: string;
       processFailed: string;
+      generateTab: string;
+      convertTab: string;
+      export: string;
+      convertDesc: string;
+      encryptedKey: string;
+      encryptedKeyPlaceholder: string;
+      passphrase: string;
+      passphrasePlaceholder: string;
+      noEncryptedKey: string;
+      noPassphrase: string;
+      convert: string;
+      converting: string;
+      result: string;
     };
     sqlFormat: {
       dialect: string;
@@ -282,20 +324,22 @@ export type Translations = {
       rightPlaceholder: string;
       diffResult: string;
       noDiff: string;
+      selectFile: string;
+      binaryFileError: string;
     };
     urlCodec: {
-        encodeComponent: string;
-        decodeComponent: string;
-        encodeURI: string;
-        decodeURI: string;
-        info: string;
-        emptyPrompt: string;
-        clear: string;
-        modeSelectionInfo: string;
-        encodeComponentDesc: string;
-        decodeComponentDesc: string;
-        encodeURIDesc: string;
-        decodeURIDesc: string;
+      encodeComponent: string;
+      decodeComponent: string;
+      encodeURI: string;
+      decodeURI: string;
+      info: string;
+      emptyPrompt: string;
+      clear: string;
+      modeSelectionInfo: string;
+      encodeComponentDesc: string;
+      decodeComponentDesc: string;
+      encodeURIDesc: string;
+      decodeURIDesc: string;
       encode: string;
       decode: string;
       input: string;
@@ -367,6 +411,10 @@ export const translations: Record<Locale, Translations> = {
       collapseSidebar: "折叠侧栏",
       expandSidebar: "展开侧栏",
       autoCollapse: "自动折叠 (2s)",
+      settings: "设置",
+      clearData: "清除本地数据",
+      clearDataConfirm: "确认清除所有已保存的输入内容？此操作不可恢复。",
+      pluginIssues: "插件加载问题",
     },
     categories: {
       text: "📋 文本",
@@ -472,6 +520,7 @@ export const translations: Record<Locale, Translations> = {
         hashTab: "哈希",
         hmacTab: "HMAC",
         aesTab: "AES 加解密",
+        rsaTab: "RSA 加解密",
         inputText: "输入文本",
         inputHashPlaceholder: "输入要计算哈希值的文本...",
         computing: "计算中...",
@@ -481,7 +530,7 @@ export const translations: Record<Locale, Translations> = {
         messagePlaceholder: "输入消息...",
         hmacResult: "结果",
         aesNote:
-          "使用 AES-GCM (256-bit) 加密，密钥截断或填充至 32 字节，输出为 Base64 (包含 IV)",
+          "使用 AES-GCM (256-bit) 加密，密钥由 PBKDF2 (SHA-256, 150000 次迭代) 派生，输出为 v1:salt:iv:ciphertext 格式（Base64）",
         encrypt: "加密",
         decrypt: "解密",
         aesKey: "密钥 (Key)",
@@ -491,6 +540,14 @@ export const translations: Record<Locale, Translations> = {
         encryptPlaceholder: "输入要加密的文本...",
         decryptPlaceholder: "输入 Base64 密文...",
         processFailed: "处理失败",
+        rsaPublicKey: "公钥 (Public Key)",
+        rsaPrivateKey: "私钥 (Private Key)",
+        rsaKeyPlaceholder: "粘贴 PEM 格式密钥 (-----BEGIN PUBLIC/PRIVATE KEY-----)",
+        rsaPlaintextPlaceholder: "输入要加密的文本...",
+        rsaCiphertextPlaceholder: "输入 Base64 密文...",
+        rsaNote:
+          "使用 RSA-OAEP (SHA-256) 加解密，仅适合加密小数据（如 AES 密钥），2048 位密钥最多约 190 字节",
+        rsaEmpty: "请输入密钥和内容",
       },
       csvJson: {
         csvInput: "CSV 输入",
@@ -498,6 +555,14 @@ export const translations: Record<Locale, Translations> = {
         csvOutput: "CSV 输出",
         jsonOutput: "JSON 输出",
         inputPlaceholder: "输入",
+        delimiter: "分隔符",
+        auto: "自动",
+        comma: "逗号 (,)",
+        semicolon: "分号 (;)",
+        tab: "制表符 (Tab)",
+        pipe: "竖线 (|)",
+        custom: "自定义",
+        customPlaceholder: "字符",
       },
       hexAscii: {
         ascii2hex: "ASCII → Hex",
@@ -534,6 +599,15 @@ export const translations: Record<Locale, Translations> = {
         renderError: "渲染错误",
         emptyPrompt: "在左侧输入 PlantUML 代码",
         loading: "渲染中...",
+        localRenderNote: "本地渲染，代码不会发送到任何服务器",
+        javaHint: "本地渲染依赖 Java，请确认已安装 Java 8+ 并加入 PATH",
+        renderMode: "渲染模式",
+        localMode: "本地渲染",
+        remoteMode: "联网渲染",
+        server: "渲染服务器",
+        serverHint: "可替换为自建 Kroki/PlantUML 服务（如 http://localhost:8000/plantuml）",
+        remoteNote: "联网渲染，图表源码将发送到远程服务器",
+        remoteWarning: "⚠️ 联网模式会把图表源码发送到远程服务器，可能包含敏感信息",
       },
       qrcode: {
         generateTab: "生成",
@@ -598,6 +672,20 @@ export const translations: Record<Locale, Translations> = {
         keyFormatInfo: "公钥格式：SPKI (SubjectPublicKeyInfo)，私钥格式：PKCS#8",
         keepPrivateKeySecret: "⚠️ 请妥善保管",
         processFailed: "处理失败",
+        generateTab: "生成密钥",
+        convertTab: "密钥去密码",
+        export: "导出",
+        convertDesc:
+          "移除加密私钥（BEGIN ENCRYPTED PRIVATE KEY）的 passphrase，输出无密码的 PKCS#8 私钥（BEGIN PRIVATE KEY）。支持 PBES2 及常见旧式加密算法。",
+        encryptedKey: "加密私钥 (PEM)",
+        encryptedKeyPlaceholder: "粘贴 BEGIN ENCRYPTED PRIVATE KEY 开头的 PEM...",
+        passphrase: "Passphrase 密码",
+        passphrasePlaceholder: "输入密钥密码...",
+        noEncryptedKey: "请输入加密私钥",
+        noPassphrase: "请输入密码",
+        convert: "转换",
+        converting: "转换中...",
+        result: "无密码私钥",
       },
       sqlFormat: {
         dialect: "方言:",
@@ -633,6 +721,8 @@ export const translations: Record<Locale, Translations> = {
         rightPlaceholder: "输入修改后的文本...",
         diffResult: "差异结果",
         noDiff: "两段文本完全相同",
+        selectFile: "选择文件",
+        binaryFileError: "不支持二进制文件，请选择纯文本文件",
       },
       urlCodec: {
         encode: "编码",
@@ -641,18 +731,20 @@ export const translations: Record<Locale, Translations> = {
         output: "输出",
         inputEncodePlaceholder: "输入要编码的 URL...",
         inputDecodePlaceholder: "输入要解码的 URL...",
-          encodeComponent: "编码组件",
-          decodeComponent: "解码组件",
-          encodeURI: "编码 URI",
-          decodeURI: "解码 URI",
-          info: "说明",
-          emptyPrompt: "输出将显示在此处",
-          clear: "清空",
-          modeSelectionInfo: "Encode/Decode Modes",
-          encodeComponentDesc: "编码组件 (encodeURIComponent)：编码 URL 组件中的特殊字符，包括 / ? # & = + 等",
-          decodeComponentDesc: "解码组件 (decodeURIComponent)：解码通过 encodeURIComponent 编码的字符串",
-          encodeURIDesc: "编码 URI (encodeURI)：编码完整 URI，保留 : / ? # [ ] @ 等 URI 结构字符",
-          decodeURIDesc: "解码 URI (decodeURI)：解码通过 encodeURI 编码的完整 URI",
+        encodeComponent: "编码组件",
+        decodeComponent: "解码组件",
+        encodeURI: "编码 URI",
+        decodeURI: "解码 URI",
+        info: "说明",
+        emptyPrompt: "输出将显示在此处",
+        clear: "清空",
+        modeSelectionInfo: "Encode/Decode Modes",
+        encodeComponentDesc:
+          "编码组件 (encodeURIComponent)：编码 URL 组件中的特殊字符，包括 / ? # & = + 等",
+        decodeComponentDesc:
+          "解码组件 (decodeURIComponent)：解码通过 encodeURIComponent 编码的字符串",
+        encodeURIDesc: "编码 URI (encodeURI)：编码完整 URI，保留 : / ? # [ ] @ 等 URI 结构字符",
+        decodeURIDesc: "解码 URI (decodeURI)：解码通过 encodeURI 编码的完整 URI",
         outputPlaceholder: "结果将显示在这里...",
         processFailed: "处理失败",
       },
@@ -716,6 +808,10 @@ export const translations: Record<Locale, Translations> = {
       collapseSidebar: "Collapse sidebar",
       expandSidebar: "Expand sidebar",
       autoCollapse: "Auto collapse (2s)",
+      settings: "Settings",
+      clearData: "Clear local data",
+      clearDataConfirm: "Clear all saved input content? This cannot be undone.",
+      pluginIssues: "Plugin load issues",
     },
     categories: {
       text: "📋 Text",
@@ -742,14 +838,12 @@ export const translations: Record<Locale, Translations> = {
         selectFile: "Select Image File",
         chooseImage: "Choose Image",
         readFileFailed: "Failed to read file",
-        unsupportedType:
-          "Only image Data URIs are supported (png/jpeg/gif/webp/bmp/ico)",
+        unsupportedType: "Only image Data URIs are supported (png/jpeg/gif/webp/bmp/ico)",
         invalidBase64: "Invalid Base64 string",
         imagePreview: "Image Preview",
         base64Result: "Base64 Result",
         inputBase64: "Input Base64 String",
-        inputBase64Placeholder:
-          "Supports data:image/...;base64,... format or plain Base64 string",
+        inputBase64Placeholder: "Supports data:image/...;base64,... format or plain Base64 string",
         renderFailed: "Failed to render image, please verify the Base64 string is valid",
       },
       timestamp: {
@@ -823,6 +917,7 @@ export const translations: Record<Locale, Translations> = {
         hashTab: "Hash",
         hmacTab: "HMAC",
         aesTab: "AES Encrypt/Decrypt",
+        rsaTab: "RSA Encrypt/Decrypt",
         inputText: "Input Text",
         inputHashPlaceholder: "Enter text to compute hash...",
         computing: "Computing...",
@@ -832,7 +927,7 @@ export const translations: Record<Locale, Translations> = {
         messagePlaceholder: "Enter message...",
         hmacResult: "Result",
         aesNote:
-          "AES-GCM (256-bit) encryption, key truncated/padded to 32 bytes, output is Base64 (with IV)",
+          "AES-GCM (256-bit) encryption, key derived via PBKDF2 (SHA-256, 150000 iterations), output is v1:salt:iv:ciphertext (Base64)",
         encrypt: "Encrypt",
         decrypt: "Decrypt",
         aesKey: "Key",
@@ -842,6 +937,14 @@ export const translations: Record<Locale, Translations> = {
         encryptPlaceholder: "Enter text to encrypt...",
         decryptPlaceholder: "Enter Base64 ciphertext...",
         processFailed: "Processing failed",
+        rsaPublicKey: "Public Key",
+        rsaPrivateKey: "Private Key",
+        rsaKeyPlaceholder: "Paste a PEM key (-----BEGIN PUBLIC/PRIVATE KEY-----)",
+        rsaPlaintextPlaceholder: "Enter text to encrypt...",
+        rsaCiphertextPlaceholder: "Enter Base64 ciphertext...",
+        rsaNote:
+          "Uses RSA-OAEP (SHA-256), suitable for encrypting small data (e.g. an AES key); a 2048-bit key encrypts at most ~190 bytes",
+        rsaEmpty: "Please provide a key and input",
       },
       csvJson: {
         csvInput: "CSV Input",
@@ -849,6 +952,14 @@ export const translations: Record<Locale, Translations> = {
         csvOutput: "CSV Output",
         jsonOutput: "JSON Output",
         inputPlaceholder: "Input",
+        delimiter: "Delimiter",
+        auto: "Auto",
+        comma: "Comma (,)",
+        semicolon: "Semicolon (;)",
+        tab: "Tab",
+        pipe: "Pipe (|)",
+        custom: "Custom",
+        customPlaceholder: "char",
       },
       hexAscii: {
         ascii2hex: "ASCII → Hex",
@@ -885,6 +996,17 @@ export const translations: Record<Locale, Translations> = {
         renderError: "Render Error",
         emptyPrompt: "Enter PlantUML code on the left",
         loading: "Rendering...",
+        localRenderNote: "Rendered locally — your code never leaves this machine",
+        javaHint: "Local rendering requires Java 8+ on your PATH",
+        renderMode: "Render mode",
+        localMode: "Local",
+        remoteMode: "Remote",
+        server: "Render server",
+        serverHint:
+          "Can point to a self-hosted Kroki/PlantUML service (e.g. http://localhost:8000/plantuml)",
+        remoteNote: "Remote rendering — your diagram source will be sent to the server",
+        remoteWarning:
+          "⚠️ Remote mode sends your diagram source to a remote server and may contain sensitive info",
       },
       qrcode: {
         generateTab: "Generate",
@@ -920,11 +1042,11 @@ export const translations: Record<Locale, Translations> = {
         multilineFlag: "Multiline",
         testInput: "Test Input",
         testPlaceholder: "Enter text to test...",
-          highlightTitle: "Match highlight",
-          detailsTitle: "Match details",
-          position: "Position",
-          length: "Length",
-          groups: "Groups",
+        highlightTitle: "Match highlight",
+        detailsTitle: "Match details",
+        position: "Position",
+        length: "Length",
+        groups: "Groups",
         results: "Match Results",
         matched: "match(es)",
         noMatch: "No match",
@@ -943,12 +1065,27 @@ export const translations: Record<Locale, Translations> = {
         rsaPKCSDesc: "RSASSA-PKCS1-v1_5",
         warning4096: "⚠️ Generating 4096-bit keys may take several seconds",
         info: "Info",
-        keysGeneratedWith: "Keys are generated using the browser's built-in Web Crypto API and are not sent to any server",
+        keysGeneratedWith:
+          "Keys are generated using the browser's built-in Web Crypto API and are not sent to any server",
         rsaOAEPInfo: "RSA-OAEP: Suitable for data encryption/decryption scenarios",
         rsaPKCSInfo: "RSASSA-PKCS1-v1_5: Suitable for digital signing/verification scenarios",
         keyFormatInfo: "Public key format: SPKI (SubjectPublicKeyInfo), Private key format: PKCS#8",
         keepPrivateKeySecret: "⚠️ Keep the private key safe",
         processFailed: "Process failed",
+        generateTab: "Generate",
+        convertTab: "Strip Passphrase",
+        export: "Export",
+        convertDesc:
+          "Remove the passphrase from an encrypted private key (BEGIN ENCRYPTED PRIVATE KEY) and output an unencrypted PKCS#8 key (BEGIN PRIVATE KEY). Supports PBES2 and common legacy schemes.",
+        encryptedKey: "Encrypted private key (PEM)",
+        encryptedKeyPlaceholder: "Paste a PEM starting with BEGIN ENCRYPTED PRIVATE KEY...",
+        passphrase: "Passphrase",
+        passphrasePlaceholder: "Enter the key passphrase...",
+        noEncryptedKey: "Please provide an encrypted private key",
+        noPassphrase: "Please provide the passphrase",
+        convert: "Convert",
+        converting: "Converting...",
+        result: "Unencrypted private key",
       },
       sqlFormat: {
         dialect: "Dialect:",
@@ -984,6 +1121,8 @@ export const translations: Record<Locale, Translations> = {
         rightPlaceholder: "Enter modified text...",
         diffResult: "Diff Result",
         noDiff: "Texts are identical",
+        selectFile: "Choose File",
+        binaryFileError: "Binary files are not supported, please choose a plain text file",
       },
       urlCodec: {
         encode: "Encode",
@@ -992,18 +1131,21 @@ export const translations: Record<Locale, Translations> = {
         output: "Output",
         inputEncodePlaceholder: "Enter URL to encode...",
         inputDecodePlaceholder: "Enter URL to decode...",
-          encodeComponent: "Encode Component",
-          decodeComponent: "Decode Component",
-          encodeURI: "Encode URI",
-          decodeURI: "Decode URI",
-          info: "Info",
-          emptyPrompt: "Output will appear here",
-          clear: "Clear",
-          modeSelectionInfo: "Encode/Decode Modes",
-          encodeComponentDesc: "Encode Component (encodeURIComponent): Encodes special characters in URL components, including / ? # & = + etc.",
-          decodeComponentDesc: "Decode Component (decodeURIComponent): Decodes strings encoded with encodeURIComponent",
-          encodeURIDesc: "Encode URI (encodeURI): Encodes full URI while preserving structural characters like : / ? # [ ] @ etc.",
-          decodeURIDesc: "Decode URI (decodeURI): Decodes full URI encoded with encodeURI",
+        encodeComponent: "Encode Component",
+        decodeComponent: "Decode Component",
+        encodeURI: "Encode URI",
+        decodeURI: "Decode URI",
+        info: "Info",
+        emptyPrompt: "Output will appear here",
+        clear: "Clear",
+        modeSelectionInfo: "Encode/Decode Modes",
+        encodeComponentDesc:
+          "Encode Component (encodeURIComponent): Encodes special characters in URL components, including / ? # & = + etc.",
+        decodeComponentDesc:
+          "Decode Component (decodeURIComponent): Decodes strings encoded with encodeURIComponent",
+        encodeURIDesc:
+          "Encode URI (encodeURI): Encodes full URI while preserving structural characters like : / ? # [ ] @ etc.",
+        decodeURIDesc: "Decode URI (decodeURI): Decodes full URI encoded with encodeURI",
         outputPlaceholder: "Result will appear here...",
         processFailed: "Processing failed",
       },

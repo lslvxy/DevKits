@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type Locale, getT } from "../../i18n/index.ts";
-import { getAllTools } from "../registry.ts";
+import { useRegistry } from "../registry.ts";
 import { useStore } from "../store.ts";
-import { CATEGORY_ORDER, type ToolCategory, type ToolDefinition } from "../types.ts";
+import { CATEGORY_ORDER, type ToolDefinition } from "../types.ts";
+import { clearDraftStorage } from "../useToolDraft.ts";
 
 export function Sidebar() {
   const {
@@ -17,22 +18,21 @@ export function Sidebar() {
     sidebarAutoCollapse,
     setSidebarAutoCollapse,
   } = useStore();
+  const { tools, customCategories, issues } = useRegistry();
   const searchRef = useRef<HTMLInputElement>(null);
-  const [, forceRender] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const timerRef = useRef<number | null>(null);
 
-  function clearTimer() {
+  const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-  }
+  }, []);
 
   function expandSidebar() {
     setCollapsed(false);
     clearTimer();
-    // collapse will be triggered when a tool is opened (activeToolId changes) if sidebarAutoCollapse is enabled
   }
 
   function collapseSidebar() {
@@ -47,28 +47,22 @@ export function Sidebar() {
       timerRef.current = window.setTimeout(() => setCollapsed(true), 2000);
     }
     return () => clearTimer();
-  }, [activeToolId, sidebarAutoCollapse]);
+  }, [activeToolId, sidebarAutoCollapse, clearTimer]);
 
   useEffect(() => {
     return () => clearTimer();
-  }, []);
+  }, [clearTimer]);
   const t = getT(locale);
 
-  // Force render to pick up registered tools
-  useEffect(() => {
-    forceRender((n) => n + 1);
-  }, []);
-
-  const allTools = getAllTools();
   const favoriteSet = new Set(favoriteToolIds);
-  const favoriteTools = allTools.filter((tool) => favoriteSet.has(tool.id));
+  const favoriteTools = tools.filter((tool) => favoriteSet.has(tool.id));
 
-  const sortByFavoriteFirst = (tools: ToolDefinition[]) =>
-    [...tools].sort((a, b) => Number(favoriteSet.has(b.id)) - Number(favoriteSet.has(a.id)));
+  const sortByFavoriteFirst = (list: ToolDefinition[]) =>
+    [...list].sort((a, b) => Number(favoriteSet.has(b.id)) - Number(favoriteSet.has(a.id)));
 
   const filtered = sortByFavoriteFirst(
     searchQuery
-      ? allTools.filter((tool) => {
+      ? tools.filter((tool) => {
           const q = searchQuery.toLowerCase();
           return (
             tool.name.zh.toLowerCase().includes(q) ||
@@ -78,17 +72,22 @@ export function Sidebar() {
             tool.keywords.some((k) => k.toLowerCase().includes(q))
           );
         })
-      : allTools
+      : tools
   );
 
+  const categoryOrder = [...CATEGORY_ORDER];
+  for (const tool of tools) {
+    if (!categoryOrder.includes(tool.category)) categoryOrder.push(tool.category);
+  }
+
+  const categoryLabel = (cat: string): string =>
+    (t.categories as Record<string, string>)[cat] ?? customCategories[cat]?.[locale] ?? cat;
+
   // Group by category
-  const grouped = CATEGORY_ORDER.reduce<Record<ToolCategory, ToolDefinition[]>>(
-    (acc, cat) => {
-      acc[cat] = filtered.filter((tool) => tool.category === cat);
-      return acc;
-    },
-    {} as Record<ToolCategory, ToolDefinition[]>
-  );
+  const grouped = categoryOrder.reduce<Record<string, ToolDefinition[]>>((acc, cat) => {
+    acc[cat] = filtered.filter((tool) => tool.category === cat);
+    return acc;
+  }, {});
 
   // Cmd+K to focus search
   useEffect(() => {
@@ -202,16 +201,16 @@ export function Sidebar() {
               </div>
             )}
 
-            {CATEGORY_ORDER.map((cat) => {
-              const tools = grouped[cat].filter((tool) => !favoriteSet.has(tool.id));
-              if (tools.length === 0) return null;
+            {categoryOrder.map((cat) => {
+              const catTools = grouped[cat]?.filter((tool) => !favoriteSet.has(tool.id)) ?? [];
+              if (catTools.length === 0) return null;
               return (
                 <div key={cat} className="mb-1">
                   <p className="px-3 pt-2 pb-1 text-[11px] font-semibold text-[#555] uppercase tracking-wider">
-                    {t.categories[cat]}
+                    {categoryLabel(cat)}
                   </p>
                   <div className="px-2">
-                    {tools.map((tool) => (
+                    {catTools.map((tool) => (
                       <ToolItem
                         key={tool.id}
                         tool={tool}
@@ -242,6 +241,24 @@ export function Sidebar() {
           <span>{locale === "zh" ? "EN" : "中"}</span>
         </button>
         <div className="flex items-center gap-2">
+          {issues.length > 0 && (
+            <span
+              title={`${t.ui.pluginIssues}:\n${issues.map((i) => `${i.source}: ${i.error}`).join("\n")}`}
+              className="text-xs text-yellow-400"
+            >
+              ⚠️
+            </span>
+          )}
+          <button
+            type="button"
+            title={t.ui.clearData}
+            onClick={() => {
+              if (window.confirm(t.ui.clearDataConfirm)) clearDraftStorage();
+            }}
+            className="text-xs text-[#888] hover:text-[#e0e0e0] transition-colors p-1 rounded"
+          >
+            🗑️
+          </button>
           <button
             type="button"
             title={t.ui.autoCollapse}

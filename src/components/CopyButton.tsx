@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { getT } from "../i18n/index.ts";
 import { useStore } from "../core/store.ts";
+import { getT } from "../i18n/index.ts";
 
 type Props = {
   text: string;

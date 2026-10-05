@@ -13,12 +13,24 @@ function dataURIToBlobURL(dataURI: string, errorMsg: string): string {
   if (!m) throw new Error(errorMsg);
   const mime = m[1];
   const b64 = dataURI.slice(dataURI.indexOf(",") + 1);
-  const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
+  // Decode aligned chunks so the full binary string never coexists with the Blob.
+  const chunks: ArrayBuffer[] = [];
+  const chunkSize = 64 * 1024; // Multiple of four for Base64 alignment.
+  const normalized = b64.replace(/[\t\n\f\r ]/g, "");
+  // Reject padding in the middle rather than accepting independently valid chunks.
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(normalized)) {
+    throw new DOMException("Invalid Base64 input", "InvalidCharacterError");
   }
-  return URL.createObjectURL(new Blob([bytes], { type: mime }));
+  for (let offset = 0; offset < normalized.length; offset += chunkSize) {
+    const binary = atob(normalized.slice(offset, offset + chunkSize));
+    const buffer = new ArrayBuffer(binary.length);
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    chunks.push(buffer);
+  }
+  return URL.createObjectURL(new Blob(chunks, { type: mime }));
 }
 
 export function Base64ImageTool() {
@@ -31,6 +43,8 @@ export function Base64ImageTool() {
   const [encodePreview, setEncodePreview] = useState("");
   const [encodeError, setEncodeError] = useState("");
   const encodeFileRef = useRef<HTMLInputElement>(null);
+  const encodeReaderRef = useRef<FileReader | null>(null);
+  const encodeBlobRef = useRef("");
 
   // Decode tab
   const [decodeInput, setDecodeInput] = useState("");
@@ -41,6 +55,8 @@ export function Base64ImageTool() {
   // Revoke blob URL on unmount to avoid memory leaks
   useEffect(() => {
     return () => {
+      encodeReaderRef.current?.abort();
+      if (encodeBlobRef.current) URL.revokeObjectURL(encodeBlobRef.current);
       if (decodeBlobRef.current) URL.revokeObjectURL(decodeBlobRef.current);
     };
   }, []);
@@ -48,14 +64,25 @@ export function Base64ImageTool() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    encodeReaderRef.current?.abort();
     const reader = new FileReader();
+    encodeReaderRef.current = reader;
     reader.onload = (ev) => {
+      if (encodeReaderRef.current !== reader) return;
       const result = ev.target?.result as string;
+      if (encodeBlobRef.current) URL.revokeObjectURL(encodeBlobRef.current);
+      const preview = URL.createObjectURL(file);
+      encodeBlobRef.current = preview;
       setEncodeResult(result);
-      setEncodePreview(result);
+      setEncodePreview(preview);
       setEncodeError("");
+      encodeReaderRef.current = null;
     };
-    reader.onerror = () => setEncodeError(t.tools.base64Image.readFileFailed);
+    reader.onerror = () => {
+      if (encodeReaderRef.current !== reader) return;
+      encodeReaderRef.current = null;
+      setEncodeError(t.tools.base64Image.readFileFailed);
+    };
     reader.readAsDataURL(file);
   };
 

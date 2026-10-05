@@ -1,84 +1,132 @@
-import type { ToolDefinition } from "./types.ts";
+import { useSyncExternalStore } from "react";
+import type { Locale, LocalizedString } from "../i18n/index.ts";
+import { CATEGORY_ORDER, type ToolDefinition } from "./types.ts";
 
-const _registry: ToolDefinition[] = [];
+export type PluginIssue = {
+  source: string;
+  error: string;
+};
 
-export function registerTool(tool: ToolDefinition): void {
-  if (_registry.find((t) => t.id === tool.id)) {
-    return;
-  }
-  _registry.push(tool);
+export type RegistrySnapshot = {
+  tools: ToolDefinition[];
+  customCategories: Record<string, LocalizedString>;
+  issues: PluginIssue[];
+};
+
+const initialSnapshot: RegistrySnapshot = {
+  tools: [],
+  customCategories: {},
+  issues: [],
+};
+
+let snapshot: RegistrySnapshot = initialSnapshot;
+const listeners = new Set<() => void>();
+
+function emit(): void {
+  for (const listener of listeners) listener();
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): RegistrySnapshot {
+  return snapshot;
+}
+
+/** Reactively subscribe to the tool registry. */
+export function useRegistry(): RegistrySnapshot {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export function getAllTools(): ToolDefinition[] {
-  return [..._registry];
+  return snapshot.tools;
 }
 
 export function getToolById(id: string): ToolDefinition | undefined {
-  return _registry.find((t) => t.id === id);
+  return snapshot.tools.find((t) => t.id === id);
 }
 
-import { tool as base64ImageTool } from "../tools/base64-image/index.ts";
-import { tool as base64Tool } from "../tools/base64/index.ts";
-import { tool as cronTool } from "../tools/cron-tool/index.ts";
-import { tool as cryptoToolsTool } from "../tools/crypto-tools/index.ts";
-import { tool as csvJsonTool } from "../tools/csv-json/index.ts";
-import { tool as hexAsciiTool } from "../tools/hex-ascii/index.ts";
-import { tool as jsonFormatterTool } from "../tools/json-formatter/index.ts";
-import { tool as jwtTool } from "../tools/jwt/index.ts";
-// Auto-register all tools
-import { tool as logParserTool } from "../tools/log-parser/index.ts";
-import { tool as mermaidTool } from "../tools/mermaid/index.ts";
-import { tool as plantumlTool } from "../tools/plantuml/index.ts";
-import { tool as qrcodeTool } from "../tools/qrcode/index.ts";
-import { tool as randomStringTool } from "../tools/random-string/index.ts";
-import { tool as regexTesterTool } from "../tools/regex-tester/index.ts";
-import { tool as rsaKeygenTool } from "../tools/rsa-keygen/index.ts";
-import { tool as sqlFormatTool } from "../tools/sql-format/index.ts";
-import { tool as sqlPojoTool } from "../tools/sql-pojo/index.ts";
-import { tool as textDiffTool } from "../tools/text-diff/index.ts";
-import { tool as timestampTool } from "../tools/timestamp/index.ts";
-import { tool as urlCodecTool } from "../tools/url-codec/index.ts";
-import { tool as uuidTool } from "../tools/uuid/index.ts";
-import { tool as yamlJsonTool } from "../tools/yaml-json/index.ts";
+/** Tool-provided translations for a given tool and locale (falls back en → zh → {}). */
+export function getToolT(id: string, locale: Locale): Record<string, string> {
+  const i18n = getToolById(id)?.i18n;
+  return i18n?.[locale] ?? i18n?.en ?? i18n?.zh ?? {};
+}
 
-registerTool(logParserTool);
-registerTool(jsonFormatterTool);
-registerTool(base64Tool);
-registerTool(timestampTool);
-registerTool(uuidTool);
-registerTool(base64ImageTool);
-registerTool(jwtTool);
-registerTool(textDiffTool);
-registerTool(yamlJsonTool);
-registerTool(sqlFormatTool);
-registerTool(sqlPojoTool);
-registerTool(qrcodeTool);
-registerTool(csvJsonTool);
-registerTool(mermaidTool);
-registerTool(plantumlTool);
-registerTool(randomStringTool);
-registerTool(hexAsciiTool);
-// New tools
-registerTool(urlCodecTool);
-registerTool(cryptoToolsTool);
-registerTool(rsaKeygenTool);
-registerTool(regexTesterTool);
-registerTool(cronTool);
+function validateTool(tool: ToolDefinition): string | null {
+  if (!tool || typeof tool !== "object") return "tool is not an object";
+  if (!tool.id || typeof tool.id !== "string") return "missing or invalid 'id'";
+  if (!tool.name?.zh || !tool.name?.en) return "missing 'name' (zh/en)";
+  if (!tool.description?.zh || !tool.description?.en) return "missing 'description' (zh/en)";
+  if (!tool.category || typeof tool.category !== "string") return "missing 'category'";
+  if (!tool.icon || typeof tool.icon !== "string") return "missing 'icon'";
+  if (!Array.isArray(tool.keywords)) return "'keywords' must be an array";
+  if (!tool.component) return "missing 'component'";
+  return null;
+}
 
-// Auto-discover private tools from src/tools-private/ (gitignored).
-// To wire in your private tools repo:
-//   git clone git@github.com:your-org/private-tools.git src/tools-private
-//   # or: git submodule add git@github.com:your-org/private-tools.git src/tools-private
-//
-// Each subdirectory must export a named `tool: ToolDefinition` from its index.ts,
-// following the same contract as tools in src/tools/.
-const _privateModules = import.meta.glob<{ tool: ToolDefinition }>(
-  "../tools-private/*/index.ts",
-  { eager: true },
-);
-for (const mod of Object.values(_privateModules)) {
-  if (mod?.tool) {
-    registerTool(mod.tool);
+export function registerTool(tool: ToolDefinition, source = "unknown"): void {
+  const error = validateTool(tool);
+  if (error) {
+    const id = tool && typeof tool.id === "string" ? tool.id : "?";
+    console.warn(`[DevKits] failed to register tool "${id}" (${source}): ${error}`);
+    snapshot = {
+      ...snapshot,
+      issues: [...snapshot.issues, { source: `${source} → ${id}`, error }],
+    };
+    emit();
+    return;
+  }
+  if (snapshot.tools.some((t) => t.id === tool.id)) {
+    return;
+  }
+  snapshot = { ...snapshot, tools: [...snapshot.tools, tool] };
+  emit();
+  try {
+    void tool.activate?.();
+  } catch (e) {
+    console.warn(`[DevKits] activate() failed for tool "${tool.id}":`, e);
   }
 }
-registerTool(cronTool);
+
+export function registerCategory(category: string, label: LocalizedString): void {
+  if (!category || snapshot.customCategories[category]) return;
+  snapshot = {
+    ...snapshot,
+    customCategories: { ...snapshot.customCategories, [category]: label },
+  };
+  emit();
+}
+
+/** Built-in categories first, then any custom category present in the registry. */
+export function getCategoryOrder(): string[] {
+  const order = [...CATEGORY_ORDER];
+  for (const tool of snapshot.tools) {
+    if (!order.includes(tool.category)) order.push(tool.category);
+  }
+  return order;
+}
+
+// ── Auto-discovery ───────────────────────────────────────────────────────────
+// Both built-in tools (src/tools/) and private tools (src/tools-private/) are
+// discovered and registered through the same `import.meta.glob` path. Adding a
+// tool is just dropping a `<name>/index.ts` exporting a `tool: ToolDefinition`.
+const _toolModules = import.meta.glob<{ tool?: ToolDefinition }>(
+  ["../tools/*/index.ts", "../tools-private/*/index.ts"],
+  { eager: true }
+);
+
+for (const [path, mod] of Object.entries(_toolModules)) {
+  if (mod?.tool) {
+    registerTool(mod.tool, path);
+  } else {
+    console.warn(`[DevKits] module "${path}" does not export a 'tool'`);
+    snapshot = {
+      ...snapshot,
+      issues: [...snapshot.issues, { source: path, error: "missing 'tool' export" }],
+    };
+  }
+}

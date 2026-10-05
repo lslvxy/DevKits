@@ -1,9 +1,9 @@
 import mermaid from "mermaid";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DualPanel } from "../../components/DualPanel.tsx";
-import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
 import { useToolDraft } from "../../core/useToolDraft.ts";
+import { getT } from "../../i18n/index.ts";
 
 const DEFAULT_CODE = `graph TD
   A[Start] --> B{Is it?}
@@ -21,32 +21,38 @@ export function MermaidDiagramTool() {
 
   useEffect(() => {
     if (!initializedRef.current) {
-      mermaid.initialize({ startOnLoad: false, theme: "dark" });
+      mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "strict" });
       initializedRef.current = true;
     }
   }, []);
 
-  const render = useCallback(async (src: string) => {
-    if (!src.trim() || !previewRef.current) return;
-    renderIdRef.current += 1;
-    const id = `mermaid-render-${renderIdRef.current}`;
-    try {
-      const { svg } = await mermaid.render(id, src);
-      if (previewRef.current) {
-        previewRef.current.innerHTML = svg;
-        setError("");
+  const render = useCallback(
+    async (src: string) => {
+      if (!src.trim() || !previewRef.current) return;
+      renderIdRef.current += 1;
+      const id = `mermaid-render-${renderIdRef.current}`;
+      try {
+        const { svg } = await mermaid.render(id, src);
+        if (previewRef.current) {
+          // securityLevel: "strict" sanitizes the SVG; parse+strip scripts as defense in depth.
+          const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
+          for (const n of doc.querySelectorAll("script")) n.remove();
+          previewRef.current.replaceChildren(doc.documentElement);
+          setError("");
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : t.tools.mermaid.renderError);
+        if (previewRef.current) {
+          previewRef.current.replaceChildren();
+        }
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t.tools.mermaid.renderError);
-      if (previewRef.current) {
-        previewRef.current.innerHTML = "";
-      }
-    }
-  }, []);
+    },
+    [t]
+  );
 
   useEffect(() => {
-    const t = setTimeout(() => render(code), 500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => render(code), 500);
+    return () => clearTimeout(timer);
   }, [code, render]);
 
   return (

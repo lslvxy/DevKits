@@ -1,16 +1,22 @@
+import { invoke } from "@tauri-apps/api/core";
 import { useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
-import { getT } from "../../i18n/index.ts";
+import { saveTextFile } from "../../core/download.ts";
 import { useStore } from "../../core/store.ts";
+import { getT } from "../../i18n/index.ts";
 
 type KeySize = 1024 | 2048 | 4096;
 type KeyAlgo = "RSA-OAEP" | "RSASSA-PKCS1-v1_5";
+type Tab = "generate" | "convert";
 
 // Convert ArrayBuffer to Base64
 function bufToBase64(buf: ArrayBuffer): string {
   const bytes = new Uint8Array(buf);
   let binary = "";
-  for (const b of bytes) binary += String.fromCharCode(b);
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
   return btoa(binary);
 }
 
@@ -54,7 +60,7 @@ async function generateRsaKeyPair(
   };
 }
 
-export function RsaKeygenTool() {
+function GenerateTab() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
   const [keySize, setKeySize] = useState<KeySize>(2048);
@@ -81,7 +87,7 @@ export function RsaKeygenTool() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-6 h-full overflow-auto">
+    <>
       {/* Controls */}
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
         <h3 className="text-sm font-medium text-[#d4d4d4] mb-4">{t.tools.rsaKeygen.keySize}</h3>
@@ -154,7 +160,16 @@ export function RsaKeygenTool() {
         <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.rsaKeygen.publicKey}</h3>
-            <CopyButton text={publicKey} />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => saveTextFile("public-key.pem", publicKey)}
+                className="px-2 py-1 text-xs rounded bg-[#3c3c3c] hover:bg-[#4c4c4c] text-[#d4d4d4] transition-colors"
+              >
+                {t.tools.rsaKeygen.export}
+              </button>
+              <CopyButton text={publicKey} />
+            </div>
           </div>
           <pre className="font-mono text-xs text-[#9cdcfe] bg-[#1e1e1e] rounded px-3 py-2 overflow-x-auto whitespace-pre-wrap">
             {publicKey}
@@ -168,9 +183,20 @@ export function RsaKeygenTool() {
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-medium text-[#d4d4d4]">
               {t.tools.rsaKeygen.privateKey}
-              <span className="ml-2 text-xs text-red-400 font-normal">{t.tools.rsaKeygen.keepPrivateKeySecret}</span>
+              <span className="ml-2 text-xs text-red-400 font-normal">
+                {t.tools.rsaKeygen.keepPrivateKeySecret}
+              </span>
             </h3>
-            <CopyButton text={privateKey} />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => saveTextFile("private-key.pem", privateKey)}
+                className="px-2 py-1 text-xs rounded bg-[#3c3c3c] hover:bg-[#4c4c4c] text-[#d4d4d4] transition-colors"
+              >
+                {t.tools.rsaKeygen.export}
+              </button>
+              <CopyButton text={privateKey} />
+            </div>
           </div>
           <pre className="font-mono text-xs text-[#ce9178] bg-[#1e1e1e] rounded px-3 py-2 overflow-x-auto whitespace-pre-wrap">
             {privateKey}
@@ -184,14 +210,155 @@ export function RsaKeygenTool() {
         <div className="text-xs text-[#858585] space-y-1">
           <p>{t.tools.rsaKeygen.keysGeneratedWith}</p>
           <p>
-            <span className="text-[#9cdcfe]">{t.tools.rsaKeygen.rsaOAEPDesc}</span>：{t.tools.rsaKeygen.rsaOAEPInfo}
+            <span className="text-[#9cdcfe]">{t.tools.rsaKeygen.rsaOAEPDesc}</span>：
+            {t.tools.rsaKeygen.rsaOAEPInfo}
           </p>
           <p>
-            <span className="text-[#9cdcfe]">{t.tools.rsaKeygen.rsaPKCSDesc}</span>：{t.tools.rsaKeygen.rsaPKCSInfo}
+            <span className="text-[#9cdcfe]">{t.tools.rsaKeygen.rsaPKCSDesc}</span>：
+            {t.tools.rsaKeygen.rsaPKCSInfo}
           </p>
           <p>{t.tools.rsaKeygen.keyFormatInfo}</p>
         </div>
       </div>
+    </>
+  );
+}
+
+function ConvertTab() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
+  const [encryptedPem, setEncryptedPem] = useState("");
+  const [passphrase, setPassphrase] = useState("");
+  const [output, setOutput] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const convert = async () => {
+    if (!encryptedPem.trim()) {
+      setError(t.tools.rsaKeygen.noEncryptedKey);
+      return;
+    }
+    if (!passphrase) {
+      setError(t.tools.rsaKeygen.noPassphrase);
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setOutput("");
+    try {
+      const pem = await invoke<string>("strip_private_key_passphrase", {
+        encryptedPem,
+        passphrase,
+      });
+      setOutput(pem);
+    } catch (e) {
+      setError(
+        typeof e === "string" ? e : e instanceof Error ? e.message : t.tools.rsaKeygen.processFailed
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-xs text-[#858585]">{t.tools.rsaKeygen.convertDesc}</p>
+      <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
+        <label htmlFor="rsa-encrypted-key" className="text-xs text-[#858585] mb-1 block">
+          {t.tools.rsaKeygen.encryptedKey}
+        </label>
+        <textarea
+          id="rsa-encrypted-key"
+          value={encryptedPem}
+          onChange={(e) => setEncryptedPem(e.target.value)}
+          placeholder={t.tools.rsaKeygen.encryptedKeyPlaceholder}
+          className="w-full h-40 bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-xs text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4] resize-none"
+        />
+      </div>
+      <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
+        <label htmlFor="rsa-passphrase" className="text-xs text-[#858585] mb-1 block">
+          {t.tools.rsaKeygen.passphrase}
+        </label>
+        <input
+          id="rsa-passphrase"
+          type="password"
+          value={passphrase}
+          onChange={(e) => setPassphrase(e.target.value)}
+          placeholder={t.tools.rsaKeygen.passphrasePlaceholder}
+          className="w-full bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4]"
+        />
+        <button
+          type="button"
+          onClick={convert}
+          disabled={loading}
+          className="mt-3 px-4 py-1.5 bg-[#0078d4] text-white text-sm rounded hover:bg-[#106ebe] transition-colors disabled:opacity-50"
+        >
+          {loading ? t.tools.rsaKeygen.converting : t.tools.rsaKeygen.convert}
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm break-all">
+          {error}
+        </div>
+      )}
+
+      {output && (
+        <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.rsaKeygen.result}</h3>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => saveTextFile("private-key.pem", output)}
+                className="px-2 py-1 text-xs rounded bg-[#3c3c3c] hover:bg-[#4c4c4c] text-[#d4d4d4] transition-colors"
+              >
+                {t.tools.rsaKeygen.export}
+              </button>
+              <CopyButton text={output} />
+            </div>
+          </div>
+          <pre className="font-mono text-xs text-[#ce9178] bg-[#1e1e1e] rounded px-3 py-2 overflow-x-auto whitespace-pre-wrap">
+            {output}
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function RsaKeygenTool() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
+  const [tab, setTab] = useState<Tab>("generate");
+
+  return (
+    <div className="flex flex-col gap-4 p-6 h-full overflow-auto">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setTab("generate")}
+          className={`px-4 py-1.5 text-sm rounded transition-colors ${
+            tab === "generate"
+              ? "bg-[#0078d4] text-white"
+              : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
+          }`}
+        >
+          {t.tools.rsaKeygen.generateTab}
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("convert")}
+          className={`px-4 py-1.5 text-sm rounded transition-colors ${
+            tab === "convert"
+              ? "bg-[#0078d4] text-white"
+              : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
+          }`}
+        >
+          {t.tools.rsaKeygen.convertTab}
+        </button>
+      </div>
+      {tab === "generate" ? <GenerateTab /> : <ConvertTab />}
     </div>
   );
 }

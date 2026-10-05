@@ -2,9 +2,10 @@ import jsQR from "jsqr";
 import QRCode from "qrcode";
 import { useEffect, useRef, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
-import { getT } from "../../i18n/index.ts";
+import { saveBytesFile } from "../../core/download.ts";
 import { useStore } from "../../core/store.ts";
 import { useToolDraft } from "../../core/useToolDraft.ts";
+import { getT } from "../../i18n/index.ts";
 
 type Tab = "generate" | "decode";
 
@@ -45,10 +46,8 @@ export function QRCodeTool() {
 
   const handleDownload = () => {
     if (!qrUrl) return;
-    const a = document.createElement("a");
-    a.href = qrUrl;
-    a.download = "qrcode.png";
-    a.click();
+    const base64 = qrUrl.includes(",") ? (qrUrl.split(",")[1] ?? "") : qrUrl;
+    void saveBytesFile("qrcode.png", base64);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,7 +106,9 @@ export function QRCodeTool() {
       {tab === "generate" && (
         <>
           <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
-            <h3 className="mb-3 text-sm font-medium text-[#d4d4d4]">{t.tools.qrcode.inputPlaceholder}</h3>
+            <h3 className="mb-3 text-sm font-medium text-[#d4d4d4]">
+              {t.tools.qrcode.inputPlaceholder}
+            </h3>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -176,7 +177,9 @@ export function QRCodeTool() {
 
           {decodePreview && (
             <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
-              <h3 className="mb-3 text-sm font-medium text-[#d4d4d4]">{t.tools.qrcode.imagePreview}</h3>
+              <h3 className="mb-3 text-sm font-medium text-[#d4d4d4]">
+                {t.tools.qrcode.imagePreview}
+              </h3>
               <img
                 src={decodePreview}
                 alt="uploaded QR"
@@ -188,7 +191,9 @@ export function QRCodeTool() {
           {decodeResult && (
             <div className="rounded-lg border border-[#3e3e42] bg-[#252526] p-4">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-[#d4d4d4]">{t.tools.qrcode.decodeResult}</h3>
+                <h3 className="text-sm font-medium text-[#d4d4d4]">
+                  {t.tools.qrcode.decodeResult}
+                </h3>
                 <CopyButton text={decodeResult} />
               </div>
               <div className="break-all rounded bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#9cdcfe]">

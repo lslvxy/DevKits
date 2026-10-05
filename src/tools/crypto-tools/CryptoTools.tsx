@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
-import { getT } from "../../i18n/index.ts";
+import { pemToDer } from "../../core/pem.ts";
 import { useStore } from "../../core/store.ts";
+import { useDebouncedValue } from "../../core/useDebouncedValue.ts";
 import { useToolDraft } from "../../core/useToolDraft.ts";
+import { getT } from "../../i18n/index.ts";
 
 // ─── MD5 (pure JS, no dependency needed) ────────────────────────────────────
 function md5(str: string): string {
@@ -162,42 +164,69 @@ async function subtleHmac(algorithm: string, key: string, data: string): Promise
     .join("");
 }
 
-// AES-GCM encrypt → base64(iv + ciphertext)
-async function aesEncrypt(plaintext: string, password: string): Promise<string> {
-  const encoder = new TextEncoder();
+// AES-GCM encrypt, key derived from password via PBKDF2 (SHA-256).
+// Output format: v1:<salt>:<iv>:<ciphertext> (all base64).
+const AES_ITERATIONS = 150000;
+
+function bufToBase64(buf: ArrayBuffer | Uint8Array<ArrayBuffer>): string {
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  let binary = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
+function base64ToBuf(b64: string): Uint8Array<ArrayBuffer> {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function deriveKey(password: string, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
-    encoder.encode(password.padEnd(32, "\0").slice(0, 32)),
-    "AES-GCM",
+    new TextEncoder().encode(password),
+    "PBKDF2",
     false,
-    ["encrypt"]
+    ["deriveKey"]
   );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: AES_ITERATIONS, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+async function aesEncrypt(plaintext: string, password: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
   const cipherBuf = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
-    keyMaterial,
-    encoder.encode(plaintext)
+    key,
+    new TextEncoder().encode(plaintext)
   );
-  const combined = new Uint8Array(12 + cipherBuf.byteLength);
-  combined.set(iv, 0);
-  combined.set(new Uint8Array(cipherBuf), 12);
-  return btoa(String.fromCharCode(...combined));
+  return ["v1", bufToBase64(salt), bufToBase64(iv), bufToBase64(cipherBuf)].join(":");
 }
 
 // AES-GCM decrypt
 async function aesDecrypt(ciphertext: string, password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const combined = Uint8Array.from(atob(ciphertext), (c) => c.charCodeAt(0));
-  const iv = combined.slice(0, 12);
-  const data = combined.slice(12);
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password.padEnd(32, "\0").slice(0, 32)),
-    "AES-GCM",
-    false,
-    ["decrypt"]
+  const parts = ciphertext.split(":");
+  if (parts.length !== 4 || parts[0] !== "v1") {
+    throw new Error("Unsupported ciphertext format (expected v1:salt:iv:ciphertext)");
+  }
+  const [, saltB64, ivB64, dataB64] = parts;
+  const key = await deriveKey(password, base64ToBuf(saltB64));
+  const plainBuf = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: base64ToBuf(ivB64) },
+    key,
+    base64ToBuf(dataB64)
   );
-  const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, keyMaterial, data);
   return new TextDecoder().decode(plainBuf);
 }
 
@@ -209,30 +238,34 @@ function HashTab() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
   const [input, setInput] = useToolDraft("crypto:hash-input");
+  const debouncedInput = useDebouncedValue(input, 300);
   const [results, setResults] = useState<Record<HashAlgo, string>>({} as Record<HashAlgo, string>);
   const [loading, setLoading] = useState(false);
+  const reqIdRef = useRef(0);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
-  useEffect(() => { if (input) computeAll(input); }, []);
-
-  const computeAll = async (text: string) => {
+  useEffect(() => {
+    const text = debouncedInput;
+    const reqId = ++reqIdRef.current;
     if (!text) {
       setResults({} as Record<HashAlgo, string>);
+      setLoading(false);
       return;
     }
     setLoading(true);
-    const [sha1, sha256, sha512] = await Promise.all([
-      subtleHash("SHA-1", text),
-      subtleHash("SHA-256", text),
-      subtleHash("SHA-512", text),
-    ]);
-    setResults({ MD5: md5(text), "SHA-1": sha1, "SHA-256": sha256, "SHA-512": sha512 });
-    setLoading(false);
-  };
+    (async () => {
+      const [sha1, sha256, sha512] = await Promise.all([
+        subtleHash("SHA-1", text),
+        subtleHash("SHA-256", text),
+        subtleHash("SHA-512", text),
+      ]);
+      if (reqId !== reqIdRef.current) return;
+      setResults({ MD5: md5(text), "SHA-1": sha1, "SHA-256": sha256, "SHA-512": sha512 });
+      setLoading(false);
+    })();
+  }, [debouncedInput]);
 
   const handleInput = (v: string) => {
     setInput(v);
-    computeAll(v);
   };
 
   return (
@@ -270,24 +303,36 @@ function HmacTab() {
   const locale = useStore((s) => s.locale);
   const t = getT(locale);
   const [message, setMessage] = useToolDraft("crypto:hmac-message");
-  const [secret, setSecret] = useToolDraft("crypto:hmac-secret");
+  const [secret, setSecret] = useToolDraft("crypto:hmac-secret", "", { sensitive: true });
+  const debouncedMessage = useDebouncedValue(message, 300);
+  const debouncedSecret = useDebouncedValue(secret, 300);
   const [algo, setAlgo] = useState<HmacAlgo>("SHA-256");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
+  const reqIdRef = useRef(0);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
-  useEffect(() => { if (message && secret) compute(message, secret, algo); }, []);
-
-  const compute = async (msg: string, sec: string, a: HmacAlgo) => {
+  useEffect(() => {
+    const msg = debouncedMessage;
+    const sec = debouncedSecret;
+    const reqId = ++reqIdRef.current;
     if (!msg || !sec) {
       setResult("");
+      setLoading(false);
       return;
     }
     setLoading(true);
-    const r = await subtleHmac(a, sec, msg);
-    setResult(r);
-    setLoading(false);
-  };
+    subtleHmac(algo, sec, msg)
+      .then((r) => {
+        if (reqId !== reqIdRef.current) return;
+        setResult(r);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (reqId !== reqIdRef.current) return;
+        setResult("");
+        setLoading(false);
+      });
+  }, [debouncedMessage, debouncedSecret, algo]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -299,7 +344,6 @@ function HmacTab() {
               type="button"
               onClick={() => {
                 setAlgo(a);
-                compute(message, secret, a);
               }}
               className={`px-3 py-1 text-xs rounded transition-colors ${
                 algo === a
@@ -322,7 +366,6 @@ function HmacTab() {
               value={secret}
               onChange={(e) => {
                 setSecret(e.target.value);
-                compute(message, e.target.value, algo);
               }}
               placeholder={t.tools.cryptoTools.secretPlaceholder}
               className="w-full bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4]"
@@ -337,7 +380,6 @@ function HmacTab() {
               value={message}
               onChange={(e) => {
                 setMessage(e.target.value);
-                compute(e.target.value, secret, algo);
               }}
               placeholder={t.tools.cryptoTools.messagePlaceholder}
               className="w-full h-24 bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4] resize-none"
@@ -347,11 +389,15 @@ function HmacTab() {
       </div>
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-[#d4d4d4]">HMAC-{algo} {t.tools.cryptoTools.hmacResult}</span>
+          <span className="text-sm font-medium text-[#d4d4d4]">
+            HMAC-{algo} {t.tools.cryptoTools.hmacResult}
+          </span>
           {result && <CopyButton text={result} />}
         </div>
         <div className="font-mono text-sm text-[#9cdcfe] bg-[#1e1e1e] rounded px-3 py-2 break-all min-h-[36px]">
-          {loading ? t.tools.cryptoTools.computing : result || <span className="text-[#858585]">—</span>}
+          {loading
+            ? t.tools.cryptoTools.computing
+            : result || <span className="text-[#858585]">—</span>}
         </div>
       </div>
     </div>
@@ -364,34 +410,39 @@ function AesTab() {
   const t = getT(locale);
   const [input, setInput] = useToolDraft("crypto:aes-input");
   const [key, setKey] = useState("");
+  const debouncedInput = useDebouncedValue(input, 300);
+  const debouncedKey = useDebouncedValue(key, 300);
   const [output, setOutput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<"encrypt" | "decrypt">("encrypt");
+  const reqIdRef = useRef(0);
 
-  const process = async (inp: string, k: string, m: "encrypt" | "decrypt") => {
+  useEffect(() => {
+    const inp = debouncedInput;
+    const k = debouncedKey;
+    const reqId = ++reqIdRef.current;
     setError(null);
     if (!inp.trim() || !k.trim()) {
       setOutput("");
       return;
     }
-    try {
-      if (m === "encrypt") {
-        setOutput(await aesEncrypt(inp, k));
-      } else {
-        setOutput(await aesDecrypt(inp, k));
+    (async () => {
+      try {
+        const out = mode === "encrypt" ? await aesEncrypt(inp, k) : await aesDecrypt(inp, k);
+        if (reqId !== reqIdRef.current) return;
+        setOutput(out);
+      } catch (e) {
+        if (reqId !== reqIdRef.current) return;
+        setError(e instanceof Error ? e.message : t.tools.cryptoTools.processFailed);
+        setOutput("");
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t.tools.cryptoTools.processFailed);
-      setOutput("");
-    }
-  };
+    })();
+  }, [debouncedInput, debouncedKey, mode, t]);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
-        <p className="text-xs text-[#858585] mb-3">
-          {t.tools.cryptoTools.aesNote}
-        </p>
+        <p className="text-xs text-[#858585] mb-3">{t.tools.cryptoTools.aesNote}</p>
         <div className="flex gap-2 mb-4">
           {(["encrypt", "decrypt"] as const).map((m) => (
             <button
@@ -399,7 +450,6 @@ function AesTab() {
               type="button"
               onClick={() => {
                 setMode(m);
-                process(input, key, m);
               }}
               className={`px-4 py-1.5 text-xs rounded transition-colors ${
                 mode === m
@@ -422,7 +472,6 @@ function AesTab() {
               value={key}
               onChange={(e) => {
                 setKey(e.target.value);
-                process(input, e.target.value, mode);
               }}
               placeholder={t.tools.cryptoTools.aesKeyPlaceholder}
               className="w-full bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4]"
@@ -437,9 +486,12 @@ function AesTab() {
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
-                process(e.target.value, key, mode);
               }}
-              placeholder={mode === "encrypt" ? t.tools.cryptoTools.encryptPlaceholder : t.tools.cryptoTools.decryptPlaceholder}
+              placeholder={
+                mode === "encrypt"
+                  ? t.tools.cryptoTools.encryptPlaceholder
+                  : t.tools.cryptoTools.decryptPlaceholder
+              }
               className="w-full h-24 bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4] resize-none"
             />
           </div>
@@ -464,8 +516,147 @@ function AesTab() {
   );
 }
 
+// ─── RSA Tab ─────────────────────────────────────────────────────────────────
+async function importRsaKey(pem: string, type: "public" | "private"): Promise<CryptoKey> {
+  const der = pemToDer(pem);
+  const algo = { name: "RSA-OAEP", hash: "SHA-256" };
+  if (type === "public") {
+    return crypto.subtle.importKey("spki", der, algo, false, ["encrypt"]);
+  }
+  return crypto.subtle.importKey("pkcs8", der, algo, false, ["decrypt"]);
+}
+
+function RsaTab() {
+  const locale = useStore((s) => s.locale);
+  const t = getT(locale);
+  const [mode, setMode] = useState<"encrypt" | "decrypt">("encrypt");
+  const [keyPem, setKeyPem] = useState("");
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const process = async () => {
+    setError(null);
+    setOutput("");
+    if (!keyPem.trim() || !input.trim()) {
+      setError(t.tools.cryptoTools.rsaEmpty);
+      return;
+    }
+    setLoading(true);
+    try {
+      const key = await importRsaKey(keyPem, mode === "encrypt" ? "public" : "private");
+      if (mode === "encrypt") {
+        const enc = await crypto.subtle.encrypt(
+          { name: "RSA-OAEP" },
+          key,
+          new TextEncoder().encode(input)
+        );
+        setOutput(bufToBase64(enc));
+      } else {
+        const dec = await crypto.subtle.decrypt(
+          { name: "RSA-OAEP" },
+          key,
+          base64ToBuf(input.trim())
+        );
+        setOutput(new TextDecoder().decode(dec));
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t.tools.cryptoTools.processFailed);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-xs text-[#858585]">{t.tools.cryptoTools.rsaNote}</p>
+      <div className="flex gap-2">
+        {(["encrypt", "decrypt"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => {
+              setMode(m);
+              setOutput("");
+              setError(null);
+            }}
+            className={`px-4 py-1.5 text-xs rounded transition-colors ${
+              mode === m
+                ? "bg-[#0078d4] text-white"
+                : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
+            }`}
+          >
+            {m === "encrypt" ? t.tools.cryptoTools.encrypt : t.tools.cryptoTools.decrypt}
+          </button>
+        ))}
+      </div>
+      <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
+        <label htmlFor="rsa-key" className="text-xs text-[#858585] mb-1 block">
+          {mode === "encrypt"
+            ? t.tools.cryptoTools.rsaPublicKey
+            : t.tools.cryptoTools.rsaPrivateKey}
+        </label>
+        <textarea
+          id="rsa-key"
+          value={keyPem}
+          onChange={(e) => setKeyPem(e.target.value)}
+          placeholder={t.tools.cryptoTools.rsaKeyPlaceholder}
+          className="w-full h-32 bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-xs text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4] resize-none"
+        />
+      </div>
+      <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
+        <label htmlFor="rsa-input" className="text-xs text-[#858585] mb-1 block">
+          {mode === "encrypt" ? t.tools.cryptoTools.plaintext : t.tools.cryptoTools.ciphertext}
+        </label>
+        <textarea
+          id="rsa-input"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={
+            mode === "encrypt"
+              ? t.tools.cryptoTools.rsaPlaintextPlaceholder
+              : t.tools.cryptoTools.rsaCiphertextPlaceholder
+          }
+          className="w-full h-24 bg-[#1e1e1e] border border-[#3e3e42] rounded px-3 py-2 text-sm text-[#d4d4d4] font-mono placeholder-[#858585] outline-none focus:border-[#0078d4] resize-none"
+        />
+        <button
+          type="button"
+          onClick={process}
+          disabled={loading}
+          className="mt-3 px-4 py-1.5 bg-[#0078d4] text-white text-sm rounded hover:bg-[#106ebe] transition-colors disabled:opacity-50"
+        >
+          {loading
+            ? t.tools.cryptoTools.computing
+            : mode === "encrypt"
+              ? t.tools.cryptoTools.encrypt
+              : t.tools.cryptoTools.decrypt}
+        </button>
+      </div>
+      {error && (
+        <div className="p-2 text-red-400 text-sm font-mono bg-[#1e1e1e] rounded break-all">
+          {error}
+        </div>
+      )}
+      {output && (
+        <div className="bg-[#252526] rounded-lg p-4 border border-[#3e3e42]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-[#d4d4d4]">
+              {mode === "encrypt" ? t.tools.cryptoTools.ciphertext : t.tools.cryptoTools.plaintext}
+            </span>
+            <CopyButton text={output} />
+          </div>
+          <div className="font-mono text-sm text-[#9cdcfe] bg-[#1e1e1e] rounded px-3 py-2 break-all min-h-[36px] whitespace-pre-wrap">
+            {output}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────
-type Tab = "hash" | "hmac" | "aes";
+type Tab = "hash" | "hmac" | "aes" | "rsa";
 
 export function CryptoTools() {
   const locale = useStore((s) => s.locale);
@@ -511,10 +702,23 @@ export function CryptoTools() {
         >
           {t.tools.cryptoTools.aesTab}
         </button>
+        <button
+          key="rsa"
+          type="button"
+          onClick={() => setTab("rsa")}
+          className={`px-4 py-1.5 text-sm rounded transition-colors ${
+            tab === "rsa"
+              ? "bg-[#0078d4] text-white"
+              : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4c4c4c]"
+          }`}
+        >
+          {t.tools.cryptoTools.rsaTab}
+        </button>
       </div>
       {tab === "hash" && <HashTab />}
       {tab === "hmac" && <HmacTab />}
       {tab === "aes" && <AesTab />}
+      {tab === "rsa" && <RsaTab />}
     </div>
   );
 }

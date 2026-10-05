@@ -2,10 +2,12 @@ import Papa from "papaparse";
 import { useEffect, useState } from "react";
 import { CopyButton } from "../../components/CopyButton.tsx";
 import { DualPanel } from "../../components/DualPanel.tsx";
-import { getT } from "../../i18n/index.ts";
 import { useStore } from "../../core/store.ts";
 import { useToolDraft } from "../../core/useToolDraft.ts";
+import { getT } from "../../i18n/index.ts";
+
 type Mode = "csv2json" | "json2csv";
+type DelimiterPreset = "auto" | "," | ";" | "\t" | "|" | "custom";
 
 export function CsvJsonTool() {
   const locale = useStore((s) => s.locale);
@@ -14,6 +16,15 @@ export function CsvJsonTool() {
   const [input, setInput] = useToolDraft("csv-json:input");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
+  const [delimiterPreset, setDelimiterPreset] = useState<DelimiterPreset>("auto");
+  const [customDelimiter, setCustomDelimiter] = useState("");
+
+  const effectiveDelimiter =
+    delimiterPreset === "custom"
+      ? customDelimiter
+      : delimiterPreset === "auto"
+        ? ""
+        : delimiterPreset;
 
   useEffect(() => {
     if (!input.trim()) {
@@ -23,7 +34,11 @@ export function CsvJsonTool() {
     }
     try {
       if (mode === "csv2json") {
-        const result = Papa.parse(input, { header: true, skipEmptyLines: true });
+        const result = Papa.parse(input, {
+          header: true,
+          skipEmptyLines: true,
+          ...(effectiveDelimiter ? { delimiter: effectiveDelimiter } : {}),
+        });
         if (result.errors.length > 0) {
           setError(result.errors[0].message);
           setOutput("");
@@ -33,14 +48,18 @@ export function CsvJsonTool() {
         }
       } else {
         const data = JSON.parse(input) as unknown;
-        setOutput(Papa.unparse(data as Parameters<typeof Papa.unparse>[0]));
+        setOutput(
+          Papa.unparse(data as Parameters<typeof Papa.unparse>[0], {
+            delimiter: effectiveDelimiter || ",",
+          })
+        );
         setError("");
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setOutput("");
     }
-  }, [input, mode]);
+  }, [input, mode, effectiveDelimiter]);
 
   const switchMode = (m: Mode) => {
     setMode(m);
@@ -56,7 +75,7 @@ export function CsvJsonTool() {
 
   return (
     <div className="flex h-full flex-col gap-4 p-6 overflow-hidden">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <button
           type="button"
           onClick={() => switchMode("csv2json")}
@@ -71,6 +90,32 @@ export function CsvJsonTool() {
         >
           JSON → CSV
         </button>
+
+        <div className="flex items-center gap-2 ml-2 text-xs text-[#858585]">
+          <span>{t.tools.csvJson.delimiter}</span>
+          <select
+            value={delimiterPreset}
+            onChange={(e) => setDelimiterPreset(e.target.value as DelimiterPreset)}
+            className="rounded border border-[#3e3e42] bg-[#1e1e1e] px-2 py-1 text-xs text-[#d4d4d4] outline-none focus:border-[#007acc]"
+          >
+            <option value="auto">{t.tools.csvJson.auto}</option>
+            <option value=",">{t.tools.csvJson.comma}</option>
+            <option value=";">{t.tools.csvJson.semicolon}</option>
+            <option value={"\t"}>{t.tools.csvJson.tab}</option>
+            <option value="|">{t.tools.csvJson.pipe}</option>
+            <option value="custom">{t.tools.csvJson.custom}</option>
+          </select>
+          {delimiterPreset === "custom" && (
+            <input
+              type="text"
+              value={customDelimiter}
+              onChange={(e) => setCustomDelimiter(e.target.value.slice(0, 1))}
+              maxLength={1}
+              placeholder={t.tools.csvJson.customPlaceholder}
+              className="w-10 rounded border border-[#3e3e42] bg-[#1e1e1e] px-2 py-1 text-xs text-[#d4d4d4] text-center outline-none focus:border-[#007acc]"
+            />
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
