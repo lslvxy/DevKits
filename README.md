@@ -471,7 +471,7 @@ my-tool/
 
 ### 关键设计决策
 
-- **业务逻辑以 TypeScript 为主**，Rust 除启动外提供 `render_plantuml`（内嵌 `plantuml.jar` 本地渲染，也支持联网模式）与 `strip_private_key_passphrase`（`pkcs8` crate 去除私钥 passphrase）
+- **业务逻辑以 TypeScript 为主**，Rust 除启动外提供 `render_plantuml`（内嵌 `plantuml.jar` 本地渲染，也支持联网模式）与 `strip_private_key_passphrase`（支持 PKCS#8 及传统加密 RSA PEM 去密码）
 - **插件化工具体系**：每个工具自包含，`registry.ts` 通过 `import.meta.glob` 统一自动发现内置与私有工具，响应式（`useSyncExternalStore`）驱动侧边栏
 - **注册校验**：工具定义在注册时做 schema 校验，坏插件不静默丢弃（侧边栏 ⚠️ 提示）
 - **零依赖 i18n**：`LocalizedString = { zh; en }` + `getT(locale)` 工厂函数，无第三方 i18n 库
@@ -511,6 +511,8 @@ pnpm test:watch     # 监听模式
 解析器模块需要有对应的单元测试覆盖。
 
 ### 新增工具使用说明
+
+RSA 密钥生成的「去除密码」支持 PKCS#8 `ENCRYPTED PRIVATE KEY`，以及带 `Proc-Type: 4,ENCRYPTED` / `DEK-Info` 的传统 `RSA PRIVATE KEY`。传统格式支持 DES-EDE3-CBC 和 AES-128/192/256-CBC，输出仍为无密码的 PKCS#1 `RSA PRIVATE KEY`；PKCS#8 输出仍为 `PRIVATE KEY`。解密在本地 Rust 中进行，不依赖 OpenSSL 可执行文件；密钥与密码不会持久化。回归密钥为独立生成的测试夹具，不包含用户提供的私钥。
 
 四个新增工具均按需加载，使用双语界面、输入草稿保存和结果复制。点击「处理」生成结果，修改输入或选项后需重新处理；结果不会额外持久化。处理在本地进行。
 

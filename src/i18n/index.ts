@@ -676,9 +676,9 @@ export const translations: Record<Locale, Translations> = {
         convertTab: "密钥去密码",
         export: "导出",
         convertDesc:
-          "移除加密私钥（BEGIN ENCRYPTED PRIVATE KEY）的 passphrase，输出无密码的 PKCS#8 私钥（BEGIN PRIVATE KEY）。支持 PBES2 及常见旧式加密算法。",
+          "移除 PKCS#8（BEGIN ENCRYPTED PRIVATE KEY）或传统 RSA（BEGIN RSA PRIVATE KEY）私钥的密码。PKCS#8 输出 BEGIN PRIVATE KEY，传统 RSA 输出 BEGIN RSA PRIVATE KEY。传统 PEM 支持 DES-EDE3-CBC 和 AES-128/192/256-CBC。",
         encryptedKey: "加密私钥 (PEM)",
-        encryptedKeyPlaceholder: "粘贴 BEGIN ENCRYPTED PRIVATE KEY 开头的 PEM...",
+        encryptedKeyPlaceholder: "粘贴 BEGIN ENCRYPTED PRIVATE KEY 或带 Proc-Type / DEK-Info 的 BEGIN RSA PRIVATE KEY PEM...",
         passphrase: "Passphrase 密码",
         passphrasePlaceholder: "输入密钥密码...",
         noEncryptedKey: "请输入加密私钥",
@@ -1076,9 +1076,9 @@ export const translations: Record<Locale, Translations> = {
         convertTab: "Strip Passphrase",
         export: "Export",
         convertDesc:
-          "Remove the passphrase from an encrypted private key (BEGIN ENCRYPTED PRIVATE KEY) and output an unencrypted PKCS#8 key (BEGIN PRIVATE KEY). Supports PBES2 and common legacy schemes.",
+          "Remove the passphrase from PKCS#8 (BEGIN ENCRYPTED PRIVATE KEY) or traditional RSA (BEGIN RSA PRIVATE KEY). Outputs PRIVATE KEY for PKCS#8 and RSA PRIVATE KEY for traditional RSA. Traditional PEM supports DES-EDE3-CBC and AES-128/192/256-CBC.",
         encryptedKey: "Encrypted private key (PEM)",
-        encryptedKeyPlaceholder: "Paste a PEM starting with BEGIN ENCRYPTED PRIVATE KEY...",
+        encryptedKeyPlaceholder: "Paste ENCRYPTED PRIVATE KEY or RSA PRIVATE KEY PEM with Proc-Type / DEK-Info headers...",
         passphrase: "Passphrase",
         passphrasePlaceholder: "Enter the key passphrase...",
         noEncryptedKey: "Please provide an encrypted private key",

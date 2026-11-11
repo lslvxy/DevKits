@@ -10,6 +10,8 @@ use pkcs8::der::pem::LineEnding;
 use pkcs8::{EncryptedPrivateKeyInfo, SecretDocument};
 use tauri_plugin_dialog::DialogExt;
 
+mod legacy_rsa;
+
 // Bundled PlantUML jar (renders diagrams locally, no network required).
 const PLANTUML_JAR: &[u8] = include_bytes!("../plantuml.jar");
 
@@ -70,16 +72,21 @@ fn render_plantuml(source: String, format: Option<String>) -> Result<String, Str
     String::from_utf8(output.stdout).map_err(|e| format!("invalid UTF-8 output: {e}"))
 }
 
-/// Remove the passphrase from an encrypted PKCS#8 private key
-/// ("BEGIN ENCRYPTED PRIVATE KEY"), returning the unencrypted PEM
-/// ("BEGIN PRIVATE KEY"). Supports PBES2 (modern) and legacy PBES1 schemes.
+/// Remove the passphrase from PKCS#8 or traditional encrypted RSA PEM.
+/// Preserve the input container: PRIVATE KEY for PKCS#8, RSA PRIVATE KEY for PKCS#1.
 #[tauri::command]
 fn strip_private_key_passphrase(encrypted_pem: String, passphrase: String) -> Result<String, String> {
+    if encrypted_pem
+        .trim()
+        .starts_with("-----BEGIN RSA PRIVATE KEY-----")
+    {
+        return legacy_rsa::decrypt(&encrypted_pem, &passphrase);
+    }
     let (label, doc) = SecretDocument::from_pem(encrypted_pem.trim())
         .map_err(|e| format!("invalid PEM input: {e}"))?;
     if label != "ENCRYPTED PRIVATE KEY" {
         return Err(format!(
-            "unsupported PEM label \"{label}\": expected an ENCRYPTED PRIVATE KEY (PKCS#8)"
+            "unsupported PEM label \"{label}\": expected ENCRYPTED PRIVATE KEY (PKCS#8) or encrypted RSA PRIVATE KEY (PKCS#1)"
         ));
     }
     let epki = EncryptedPrivateKeyInfo::try_from(doc.as_bytes())
